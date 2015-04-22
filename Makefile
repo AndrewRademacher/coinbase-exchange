@@ -1,4 +1,4 @@
-boot:
+boot: sandbox
 	cabal build
 
 sandbox:

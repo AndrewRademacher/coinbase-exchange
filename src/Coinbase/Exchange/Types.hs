@@ -13,6 +13,24 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.Trans.Resource
 
+-- API URLs
+
+type Endpoint = String
+
+website :: Endpoint
+website = "https://public.sandbox.exchange.coinbase.com"
+
+sandboxRest :: Endpoint
+sandboxRest = "https://api-public.sandbox.exchange.coinbase.com"
+
+sandboxSocket :: Endpoint
+sandboxSocket = "wss://ws-feed-public.sandbox.exchange.coinbase.com"
+
+liveRest :: Endpoint
+liveRest = "https://api.exchange.coinbase.com"
+
+-- Monad Stack
+
 data ExchangeConf = ExchangeConf
 
 data ExchangeFailure = ExchangeFailure

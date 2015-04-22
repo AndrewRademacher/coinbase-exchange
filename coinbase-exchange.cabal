@@ -17,6 +17,7 @@ library
     build-depends:      base                ==4.7.*
                     ,   mtl                 ==2.2.*
                     ,   resourcet           ==1.1.*
+                    ,   transformers-base   ==0.4.*
 
 executable sandbox
     main-is:            Main.hs

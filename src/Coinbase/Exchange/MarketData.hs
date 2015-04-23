@@ -112,6 +112,29 @@ getOrderBook :: (MonadResource m, MonadReader ExchangeConf m, MonadError Exchang
              => ProductId -> m (Book OrderId)
 getOrderBook (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/book?level=3")
 
+-- Product Ticker
+
+data Tick
+    = Tick
+        { tickTradeId :: Word64
+        , tickPrice   :: Price
+        , tickSize    :: Size
+        , tickTime    :: UTCTime
+        }
+    deriving (Show, Generic)
+
+instance FromJSON Tick where
+    parseJSON (Object m)
+        = Tick <$> m .: "trade_id"
+               <*> liftM (Price . read) (m .: "price")
+               <*> liftM (Size . read) (m .: "size")
+               <*> m .: "time"
+    parseJSON _ = mzero
+
+getProductTicker :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+                 => ProductId -> m Tick
+getProductTicker (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/ticker")
+
 -- Exchange Currencies
 
 newtype CurrencyId = CurrencyId { unCurrencyId :: Text }

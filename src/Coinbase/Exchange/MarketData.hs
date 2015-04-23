@@ -231,6 +231,29 @@ getHistory (ProductId p) start end scale = coinbaseRequest liveRest path
           fmt t  = let t' = formatTime defaultTimeLocale "%FT%T." t
                     in t' ++ take 6 (formatTime defaultTimeLocale "%q" t) ++ "Z"
 
+-- Product Stats
+
+data Stats
+    = Stats
+        { statsOpen   :: Open
+        , statsHigh   :: High
+        , statsLow    :: Low
+        , statsVolume :: Volume
+        }
+    deriving (Show, Generic)
+
+instance FromJSON Stats where
+    parseJSON (Object m)
+        = Stats <$> liftM (Open . read) (m .: "open")
+                <*> liftM (High . read) (m .: "high")
+                <*> liftM (Low . read) (m .: "low")
+                <*> liftM (Volume . read) (m .: "volume")
+    parseJSON _ = mzero
+
+getStats :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+         => ProductId -> m Stats
+getStats (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/stats")
+
 -- Exchange Currencies
 
 newtype CurrencyId = CurrencyId { unCurrencyId :: Text }

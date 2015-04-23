@@ -1,7 +1,12 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Coinbase.Exchange.MarketData where
 
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Control.Monad.Trans.Resource
 import           Data.Aeson
 import           Data.Aeson.Casing
 import           Data.Time
@@ -20,5 +25,6 @@ data ExchangeTime
 instance FromJSON ExchangeTime where
     parseJSON = genericParseJSON $ aesonPrefix snakeCase
 
-getExchangeTime :: Exchange ExchangeTime
+getExchangeTime :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+                => m ExchangeTime
 getExchangeTime = coinbaseRequest liveRest "/time"

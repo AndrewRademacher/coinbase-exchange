@@ -9,7 +9,7 @@ import           Coinbase.Exchange.MarketData
 import           Coinbase.Exchange.Types
 
 main :: IO ()
-main = undefined
+main = putStrLn "Use GHCi."
 
 withCoinbase :: Exchange a -> IO a
 withCoinbase act = do

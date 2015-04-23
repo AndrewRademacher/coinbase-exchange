@@ -30,6 +30,7 @@ library
                     ,   text                ==1.2.*
                     ,   bytestring          ==0.10.*
                     ,   time                ==1.4.*
+                    ,   scientific          ==0.3.*
 
 executable sandbox
     main-is:            Main.hs

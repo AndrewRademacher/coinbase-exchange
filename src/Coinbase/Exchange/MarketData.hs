@@ -21,6 +21,30 @@ import           GHC.Generics
 import           Coinbase.Exchange.Rest
 import           Coinbase.Exchange.Types
 
+-- Products
+
+newtype ProductId = ProductId { unProductId :: Text }
+    deriving (Eq, Ord, Show, Read, IsString, FromJSON, ToJSON)
+
+data Product
+    = Product
+        { prodId             :: ProductId
+        , prodBaseCurrency   :: CurrencyId
+        , prodQuoteCurrency  :: CurrencyId
+        , prodBaseMinSize    :: Scientific
+        , prodBaseMaxSize    :: Scientific
+        , prodQuoteIncrement :: Scientific
+        , prodDisplayName    :: Text
+        }
+    deriving (Show, Generic)
+
+instance FromJSON Product where
+    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+
+getProducts :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+            => m [Product]
+getProducts = coinbaseRequest liveRest "/products"
+
 -- Exchange Currencies
 
 newtype CurrencyId = CurrencyId { unCurrencyId :: Text }

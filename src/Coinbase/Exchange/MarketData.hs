@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -13,6 +14,7 @@ import           Control.Monad.Trans.Resource
 import           Data.Aeson.Casing
 import           Data.Aeson.Types
 import           Data.Int
+import           Data.List
 import           Data.Scientific
 import           Data.String
 import           Data.Text                    (Text)
@@ -24,6 +26,12 @@ import           Data.UUID.Aeson              ()
 import qualified Data.Vector                  as V
 import           Data.Word
 import           GHC.Generics
+
+#if MIN_VERSION_time(1,5,0)
+import           Data.Time.Format             (defaultTimeLocale)
+#else
+import           System.Locale                (defaultTimeLocale)
+#endif
 
 import           Coinbase.Exchange.Rest
 import           Coinbase.Exchange.Types
@@ -205,9 +213,23 @@ newtype Close = Close { unClose :: Double }
 newtype Volume = Volume { unVolume :: Double }
     deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
 
+type StartTime  = UTCTime
+type EndTime    = UTCTime
+type Scale      = Int
+
 getHistory :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-           => ProductId -> m [Candle]
-getHistory (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/candles")
+           => ProductId -> Maybe StartTime -> Maybe EndTime -> Maybe Scale -> m [Candle]
+getHistory (ProductId p) start end scale = coinbaseRequest liveRest path
+    where path   = "/products/" ++ T.unpack p ++ "/candles?" ++ params
+          params = intercalate "&" $ map (\(k, v) -> k ++ "=" ++ v) $ start' ++ end' ++ scale'
+          start' = case start of Nothing -> []
+                                 Just  t -> [(      "start",  fmt t)]
+          end'   = case end   of Nothing -> []
+                                 Just  t -> [(        "end",  fmt t)]
+          scale' = case scale of Nothing -> []
+                                 Just  s -> [("granularity", show s)]
+          fmt t  = let t' = formatTime defaultTimeLocale "%FT%T." t
+                    in t' ++ take 6 (formatTime defaultTimeLocale "%q" t) ++ "Z"
 
 -- Exchange Currencies
 

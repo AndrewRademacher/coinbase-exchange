@@ -35,6 +35,8 @@ library
                     ,   uuid-aeson          ==0.1.*
                     ,   vector              ==0.10.*
 
+                    ,   old-locale
+
 executable sandbox
     main-is:            Main.hs
     hs-source-dirs:     sbox
@@ -44,6 +46,8 @@ executable sandbox
                     ,   http-client         ==0.4.*
                     ,   http-client-tls     ==0.2.*
 
+                    ,   time
+                    ,   old-locale
                     ,   conduit
                     ,   conduit-extra
                     ,   http-conduit

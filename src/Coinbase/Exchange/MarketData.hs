@@ -167,6 +167,7 @@ instance FromJSON Side where
     parseJSON (String "sell") = return Sell
     parseJSON _ = mzero
 
+-- | Currently Broken: coinbase api doesn't return valid ISO 8601 dates for this route.
 getTrades :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
           => ProductId -> m [Trade]
 getTrades (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/trades")

@@ -10,12 +10,18 @@ import           Control.Applicative
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.Trans.Resource
-import           Data.Aeson
 import           Data.Aeson.Casing
+import           Data.Aeson.Types
+import           Data.Int
 import           Data.Scientific
 import           Data.String
 import           Data.Text                    (Text)
+import qualified Data.Text                    as T
 import           Data.Time
+import           Data.UUID
+import           Data.UUID.Aeson              ()
+import qualified Data.Vector                  as V
+import           Data.Word
 import           GHC.Generics
 
 import           Coinbase.Exchange.Rest
@@ -44,6 +50,67 @@ instance FromJSON Product where
 getProducts :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
             => m [Product]
 getProducts = coinbaseRequest liveRest "/products"
+
+-- Order Book
+
+data Book a
+    = Book
+        { bookSequence :: Word64
+        , bookBids     :: [Bid a]
+        , bookAsks     :: [Ask a]
+        }
+    deriving (Show, Generic)
+
+instance (FromJSON a) => FromJSON (Book a) where
+    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+
+data Ask a = Ask Price Size a
+    deriving (Eq, Ord, Show, Read, Generic)
+
+instance (FromJSON a) => FromJSON (Ask a) where
+    parseJSON (Array v)
+        = case V.length v of
+            3 -> Ask <$> liftM (Price . read) (parseJSON (v V.! 0))
+                     <*> liftM (Size . read) (parseJSON (v V.! 1))
+                     <*> parseJSON (v V.! 2)
+            _ -> mzero
+    parseJSON _ = mzero
+
+data Bid a = Bid Price Size a
+    deriving (Eq, Ord, Show, Read, Generic)
+
+instance (FromJSON a) => FromJSON (Bid a) where
+    parseJSON (Array v)
+        = case V.length v of
+            3 -> Bid <$> liftM (Price . read) (parseJSON (v V.! 0))
+                     <*> liftM (Size . read) (parseJSON (v V.! 1))
+                     <*> parseJSON (v V.! 2)
+            _ -> mzero
+    parseJSON _ = mzero
+
+newtype Price = Price { unPrice :: Scientific }
+    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+
+newtype Size = Size { unSize :: Scientific }
+    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+
+newtype OrderId = OrderId { unOrderId :: UUID }
+    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+
+newtype Aggregate = Aggregate { unAggregate :: Int64 }
+    deriving (Eq, Ord, Show, Read, Num, FromJSON, ToJSON)
+
+getTopOfBook :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+             => ProductId -> m (Book Aggregate)
+getTopOfBook (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/book?level=1")
+
+getTop50OfBook :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+               => ProductId -> m (Book Aggregate)
+getTop50OfBook (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/book?level=2")
+
+getOrderBook :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+             => ProductId -> m (Book OrderId)
+getOrderBook (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/book?level=3")
 
 -- Exchange Currencies
 

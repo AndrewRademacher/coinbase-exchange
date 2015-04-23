@@ -11,6 +11,9 @@ import           Coinbase.Exchange.Types
 main :: IO ()
 main = putStrLn "Use GHCi."
 
+btc :: ProductId
+btc = "BTC-USD"
+
 withCoinbase :: Exchange a -> IO a
 withCoinbase act = do
         mgr <- newManager tlsManagerSettings

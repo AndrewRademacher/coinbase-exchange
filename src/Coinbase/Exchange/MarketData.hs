@@ -135,6 +135,42 @@ getProductTicker :: (MonadResource m, MonadReader ExchangeConf m, MonadError Exc
                  => ProductId -> m Tick
 getProductTicker (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/ticker")
 
+-- Product Trades
+
+newtype TradeId = TradeId { unTradeId :: Word64 }
+    deriving (Eq, Ord, Show, Read, Num, FromJSON, ToJSON)
+
+data Trade
+    = Trade
+        { tradeTime  :: UTCTime
+        , tradeId    :: TradeId
+        , tradePrice :: Price
+        , tradeSize  :: Size
+        , tradeSide  :: Side
+        }
+    deriving (Show, Generic)
+
+instance FromJSON Trade where
+    parseJSON (Object m)
+        = Trade <$> m .: "time"
+                <*> m .: "trade_id"
+                <*> liftM (Price . read) (m .: "price")
+                <*> liftM (Size . read) (m .: "size")
+                <*> m .: "side"
+    parseJSON _ = mzero
+
+data Side = Buy | Sell
+    deriving (Eq, Show, Read, Generic)
+
+instance FromJSON Side where
+    parseJSON (String "buy")  = return Buy
+    parseJSON (String "sell") = return Sell
+    parseJSON _ = mzero
+
+getTrades :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+          => ProductId -> m [Trade]
+getTrades (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/trades")
+
 -- Exchange Currencies
 
 newtype CurrencyId = CurrencyId { unCurrencyId :: Text }

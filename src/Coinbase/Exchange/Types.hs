@@ -35,12 +35,13 @@ liveRest = "https://api.exchange.coinbase.com"
 -- Monad Stack
 
 data ExchangeConf
-    = ExchangeCon
+    = ExchangeConf
         { manager :: Manager
         }
 
 data ExchangeFailure = ParseFailure Text
                      | ApiFailure Text
+                     deriving (Show)
 
 type Exchange a = ExchangeT IO a
 

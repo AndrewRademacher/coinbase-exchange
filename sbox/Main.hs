@@ -2,20 +2,19 @@
 
 module Main where
 
-import           Data.Conduit
-import qualified Data.Conduit.Binary     as BIN
-import qualified Data.Conduit.List       as CL
-import           Network.HTTP.Conduit
-import           System.IO
+import           Network.HTTP.Client
+import           Network.HTTP.Client.TLS
 
+import           Coinbase.Exchange.MarketData
 import           Coinbase.Exchange.Types
 
 main :: IO ()
-main = do
-        req <- parseUrl $ "https://api.exchange.coinbase.com/time"
-        let req' = req { requestHeaders = [ ("user-agent", "Haskell") ]
-                       }
+main = undefined
 
-        withManager $ \manager -> do
-            res <- http req' manager
-            responseBody res $$+- BIN.sinkHandle stdout
+withCoinbase :: Exchange a -> IO a
+withCoinbase act = do
+        mgr <- newManager tlsManagerSettings
+        res <- runExchange (ExchangeConf mgr) act
+        case res of
+            Right s -> return s
+            Left  f -> error $ show f

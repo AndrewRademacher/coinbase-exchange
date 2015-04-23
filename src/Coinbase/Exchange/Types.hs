@@ -12,10 +12,13 @@ import           Control.Monad.Base
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.Trans.Resource
+import           Data.Text                    (Text)
+import           Network.HTTP.Conduit
 
 -- API URLs
 
 type Endpoint = String
+type Path     = String
 
 website :: Endpoint
 website = "https://public.sandbox.exchange.coinbase.com"
@@ -31,9 +34,13 @@ liveRest = "https://api.exchange.coinbase.com"
 
 -- Monad Stack
 
-data ExchangeConf = ExchangeConf
+data ExchangeConf
+    = ExchangeCon
+        { manager :: Manager
+        }
 
-data ExchangeFailure = ExchangeFailure
+data ExchangeFailure = ParseFailure Text
+                     | ApiFailure Text
 
 type Exchange a = ExchangeT IO a
 
@@ -51,3 +58,10 @@ runExchange = runExchangeT
 
 runExchangeT :: MonadBaseControl IO m => ExchangeConf -> ExchangeT m a -> m (Either ExchangeFailure a)
 runExchangeT conf = runExceptT . flip runReaderT conf . runResourceT . unExchangeT
+
+-- Utils
+
+getManager :: (MonadReader ExchangeConf m) => m Manager
+getManager = do
+        conf <- ask
+        return $ manager conf

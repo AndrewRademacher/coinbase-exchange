@@ -18,6 +18,7 @@ import           Data.String
 import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import           Data.Time
+import           Data.Time.Clock.POSIX
 import           Data.UUID
 import           Data.UUID.Aeson              ()
 import qualified Data.Vector                  as V
@@ -171,6 +172,42 @@ instance FromJSON Side where
 getTrades :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
           => ProductId -> m [Trade]
 getTrades (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/trades")
+
+-- Historic Rates (Candles)
+
+data Candle = Candle UTCTime Low High Open Close Volume
+    deriving (Show, Generic)
+
+instance FromJSON Candle where
+    parseJSON (Array v)
+        = case V.length v of
+            6 -> Candle <$> liftM (posixSecondsToUTCTime . fromIntegral) (parseJSON (v V.! 0) :: Parser Int64)
+                        <*> parseJSON (v V.! 1)
+                        <*> parseJSON (v V.! 2)
+                        <*> parseJSON (v V.! 3)
+                        <*> parseJSON (v V.! 4)
+                        <*> parseJSON (v V.! 5)
+            _ -> mzero
+    parseJSON _ = mzero
+
+newtype Low = Low { unLow :: Double }
+    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+
+newtype High = High { unHigh :: Double }
+    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+
+newtype Open = Open { unOpen :: Double }
+    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+
+newtype Close = Close { unClose :: Double }
+    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+
+newtype Volume = Volume { unVolume :: Double }
+    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+
+getHistory :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+           => ProductId -> m [Candle]
+getHistory (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/candles")
 
 -- Exchange Currencies
 

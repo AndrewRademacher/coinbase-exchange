@@ -46,11 +46,15 @@ executable sandbox
                     ,   http-client         ==0.4.*
                     ,   http-client-tls     ==0.2.*
 
+                    ,   text
                     ,   time
                     ,   old-locale
                     ,   conduit
                     ,   conduit-extra
                     ,   http-conduit
                     ,   resourcet
-
+                    ,   websockets
+                    ,   transformers
+                    ,   network
+                    
                     ,   coinbase-exchange

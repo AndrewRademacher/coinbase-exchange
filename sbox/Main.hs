@@ -5,6 +5,8 @@ module Main where
 import           Control.Concurrent
 import           Control.Monad
 import           Control.Monad.IO.Class
+import           Data.Aeson
+import qualified Data.ByteString              as BS
 import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import qualified Data.Text.IO                 as T
@@ -16,6 +18,7 @@ import qualified Network.WebSockets           as WS
 import           System.Locale
 
 import           Coinbase.Exchange.MarketData
+import           Coinbase.Exchange.Socket
 import           Coinbase.Exchange.Types
 
 btc :: ProductId
@@ -54,3 +57,6 @@ app conn = do
 
 main :: IO ()
 main = withSocketsDo $ WS.runClient "echo.websocket.org" 80 "/" app
+
+msg :: BS.ByteString
+msg = "{\"type\": \"subscribe\",\"product_id\": \"BTC-USD\"}"

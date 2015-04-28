@@ -171,10 +171,14 @@ instance FromJSON Trade where
 data Side = Buy | Sell
     deriving (Eq, Show, Read, Generic)
 
+instance ToJSON Side where
+    toJSON Buy  = String "buy"
+    toJSON Sell = String "sell"
+
 instance FromJSON Side where
     parseJSON (String "buy")  = return Buy
     parseJSON (String "sell") = return Sell
-    parseJSON _ = mzero
+    parseJSON _               = mzero
 
 -- | Currently Broken: coinbase api doesn't return valid ISO 8601 dates for this route.
 getTrades :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)

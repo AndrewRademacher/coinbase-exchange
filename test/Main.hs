@@ -1,10 +1,19 @@
 module Main where
 
-import Test.Tasty
+import           Network.HTTP.Client.TLS
+import           Network.HTTP.Conduit
+import           Test.Tasty
+
+import           Coinbase.Exchange.Types
+
+import qualified Coinbase.Exchange.MarketData.Test as MarketData
 
 main :: IO ()
-main = defaultMain  tests
+main = do
+        mgr <- newManager tlsManagerSettings
+        defaultMain (tests $ ExchangeConf mgr)
 
-tests = testGroup "Tests"
-    [
-    ]
+tests :: ExchangeConf -> TestTree
+tests conf = testGroup "Tests"
+        [ MarketData.tests conf
+        ]

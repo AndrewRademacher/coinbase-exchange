@@ -73,3 +73,12 @@ test-suite test-coinbase
 
     build-depends:      base                ==4.7.*
                     ,   tasty               ==0.10.*
+                    ,   tasty-th            ==0.1.*
+                    ,   tasty-quickcheck    ==0.8.*
+                    ,   tasty-hunit         ==0.9.*
+
+                    ,   http-client-tls
+                    ,   http-conduit
+                    ,   transformers
+
+                    ,   coinbase-exchange

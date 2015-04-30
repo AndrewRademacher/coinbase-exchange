@@ -20,6 +20,7 @@ import           System.Locale
 import           Coinbase.Exchange.MarketData
 import           Coinbase.Exchange.Socket
 import           Coinbase.Exchange.Types
+import           Coinbase.Exchange.Types.Core
 
 btc :: ProductId
 btc = "BTC-USD"

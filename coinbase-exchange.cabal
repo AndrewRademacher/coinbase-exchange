@@ -14,6 +14,9 @@ library
 
     exposed-modules:    Coinbase.Exchange.MarketData
                     ,   Coinbase.Exchange.Socket
+                    ,   Coinbase.Exchange.Types.Core
+                    ,   Coinbase.Exchange.Types.MarketData
+                    ,   Coinbase.Exchange.Types.Socket
                     ,   Coinbase.Exchange.Types
 
     other-modules:      Coinbase.Exchange.Rest
@@ -61,3 +64,11 @@ executable sandbox
                     ,   network
 
                     ,   coinbase-exchange
+
+test-suite test-coinbase
+    type:               exitcode-stdio-1.0
+    main-is:            Main.hs
+    hs-source-dirs:     test
+
+    build-depends:      base                ==4.7.*
+                    ,   tasty               ==0.10.*

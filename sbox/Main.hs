@@ -28,7 +28,7 @@ btc :: ProductId
 btc = "BTC-USD"
 
 start :: Maybe UTCTime
-start = Just $ readTime defaultTimeLocale "%FT%X%z" "2014-04-23T20:22:37+0000"
+start = Just $ readTime defaultTimeLocale "%FT%X%z" "2015-04-12T20:22:37+0000"
 
 end :: Maybe UTCTime
 end = Just $ readTime defaultTimeLocale "%FT%X%z" "2015-04-23T20:22:37+0000"

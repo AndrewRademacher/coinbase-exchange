@@ -62,6 +62,7 @@ executable sandbox
                     ,   websockets
                     ,   transformers
                     ,   network
+                    ,   wuss
 
                     ,   coinbase-exchange
 

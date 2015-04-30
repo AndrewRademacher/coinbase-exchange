@@ -22,13 +22,10 @@ data Reason = Filled | Canceled
     deriving (Eq, Show, Read, Generic)
 
 instance ToJSON Reason where
-    toJSON Filled   = String "filled"
-    toJSON Canceled = String "canceled"
+    toJSON = genericToJSON defaultOptions { constructorTagModifier = map toLower }
 
 instance FromJSON Reason where
-    parseJSON (String "filled")   = return Filled
-    parseJSON (String "canceled") = return Canceled
-    parseJSON _                   = mzero
+    parseJSON = genericParseJSON defaultOptions { constructorTagModifier = map toLower }
 
 data ExchangeMessage
     = Subscribe

@@ -13,6 +13,7 @@ import           Control.Monad.Reader
 import           Control.Monad.Trans.Resource
 import           Data.Aeson.Casing
 import           Data.Aeson.Types
+import           Data.Char
 import           Data.Int
 import           Data.List
 import           Data.Scientific
@@ -172,13 +173,10 @@ data Side = Buy | Sell
     deriving (Eq, Show, Read, Generic)
 
 instance ToJSON Side where
-    toJSON Buy  = String "buy"
-    toJSON Sell = String "sell"
+    toJSON = genericToJSON defaultOptions { constructorTagModifier = map toLower }
 
 instance FromJSON Side where
-    parseJSON (String "buy")  = return Buy
-    parseJSON (String "sell") = return Sell
-    parseJSON _               = mzero
+    parseJSON = genericParseJSON defaultOptions { constructorTagModifier = map toLower }
 
 -- | Currently Broken: coinbase api doesn't return valid ISO 8601 dates for this route.
 getTrades :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)

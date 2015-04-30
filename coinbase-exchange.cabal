@@ -38,6 +38,8 @@ library
                     ,   uuid                ==1.3.*
                     ,   uuid-aeson          ==0.1.*
                     ,   vector              ==0.10.*
+                    ,   hashable            ==1.2.*
+                    ,   deepseq             ==1.3.*
 
                     ,   old-locale
 
@@ -63,6 +65,7 @@ executable sandbox
                     ,   transformers
                     ,   network
                     ,   wuss
+                    ,   scientific
 
                     ,   coinbase-exchange
 

@@ -4,6 +4,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RecordWildCards            #-}
 
 module Coinbase.Exchange.Types.MarketData where
 
@@ -57,26 +58,20 @@ instance (FromJSON a) => FromJSON (Book a) where
 data Ask a = Ask Price Size a
     deriving (Eq, Ord, Show, Read, Generic)
 
+instance (ToJSON a) => ToJSON (Ask a) where
+    toJSON = genericToJSON defaultOptions
+
 instance (FromJSON a) => FromJSON (Ask a) where
-    parseJSON (Array v)
-        = case V.length v of
-            3 -> Ask <$> liftM (Price . read) (parseJSON (v V.! 0))
-                     <*> liftM (Size . read) (parseJSON (v V.! 1))
-                     <*> parseJSON (v V.! 2)
-            _ -> mzero
-    parseJSON _ = mzero
+    parseJSON = genericParseJSON defaultOptions
 
 data Bid a = Bid Price Size a
     deriving (Eq, Ord, Show, Read, Generic)
 
+instance (ToJSON a) => ToJSON (Bid a) where
+    toJSON = genericToJSON defaultOptions
+
 instance (FromJSON a) => FromJSON (Bid a) where
-    parseJSON (Array v)
-        = case V.length v of
-            3 -> Bid <$> liftM (Price . read) (parseJSON (v V.! 0))
-                     <*> liftM (Size . read) (parseJSON (v V.! 1))
-                     <*> parseJSON (v V.! 2)
-            _ -> mzero
-    parseJSON _ = mzero
+    parseJSON = genericParseJSON defaultOptions
 
 -- Product Ticker
 
@@ -89,13 +84,11 @@ data Tick
         }
     deriving (Show, Generic)
 
+instance ToJSON Tick where
+    toJSON = genericToJSON $ aesonPrefix snakeCase
+
 instance FromJSON Tick where
-    parseJSON (Object m)
-        = Tick <$> m .: "trade_id"
-               <*> liftM (Price . read) (m .: "price")
-               <*> liftM (Size . read) (m .: "size")
-               <*> m .: "time"
-    parseJSON _ = mzero
+    parseJSON = genericParseJSON $ aesonPrefix snakeCase
 
 -- Product Trades
 
@@ -109,14 +102,11 @@ data Trade
         }
     deriving (Show, Generic)
 
+instance ToJSON Trade where
+    toJSON = genericToJSON $ aesonPrefix snakeCase
+
 instance FromJSON Trade where
-    parseJSON (Object m)
-        = Trade <$> m .: "time"
-                <*> m .: "trade_id"
-                <*> liftM (Price . read) (m .: "price")
-                <*> liftM (Size . read) (m .: "size")
-                <*> m .: "side"
-    parseJSON _ = mzero
+    parseJSON = genericParseJSON $ aesonPrefix snakeCase
 
 -- Historic Rates (Candles)
 
@@ -161,6 +151,14 @@ data Stats
         }
     deriving (Show, Generic)
 
+instance ToJSON Stats where
+    toJSON Stats{..} = object
+        [ "open"    .= show statsOpen
+        , "high"    .= show statsHigh
+        , "low"     .= show statsLow
+        , "volume"  .= show statsVolume
+        ]
+
 instance FromJSON Stats where
     parseJSON (Object m)
         = Stats <$> liftM (Open . read) (m .: "open")
@@ -178,16 +176,15 @@ data Currency
     = Currency
         { curId      :: CurrencyId
         , curName    :: Text
-        , curMinSize :: Scientific
+        , curMinSize :: CoinScientific
         }
     deriving (Show, Generic)
 
+instance ToJSON Currency where
+    toJSON = genericToJSON $ aesonPrefix snakeCase
+
 instance FromJSON Currency where
-    parseJSON (Object m)
-        = Currency <$> m .: "id"
-                   <*> m .: "name"
-                   <*> liftM read (m .: "min_size")
-    parseJSON _ = mzero
+    parseJSON = genericParseJSON $ aesonPrefix snakeCase
 
 -- Exchange Time
 

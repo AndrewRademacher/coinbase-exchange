@@ -4,12 +4,7 @@ module Main where
 
 import           Control.Concurrent
 import           Control.Monad
-import           Control.Monad.IO.Class
 import           Data.Aeson
-import qualified Data.ByteString                as BS
-import           Data.Text                      (Text)
-import qualified Data.Text                      as T
-import qualified Data.Text.IO                   as T
 import           Data.Time
 import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
@@ -18,8 +13,6 @@ import qualified Network.WebSockets             as WS
 import           System.Locale
 import           Wuss
 
-import           Coinbase.Exchange.MarketData
-import           Coinbase.Exchange.Socket
 import           Coinbase.Exchange.Types
 import           Coinbase.Exchange.Types.Core
 import           Coinbase.Exchange.Types.Socket
@@ -50,29 +43,9 @@ app conn = do
             ds <- WS.receiveData conn
             let res = eitherDecode ds
             print (res :: Either String ExchangeMessage)
-            -- print (decode ds :: Maybe ExchangeMessage)
-            -- msg <- WS.receiveData conn
-            -- liftIO $ T.putStrLn msg
-
         WS.sendBinaryData conn $ encode (Subscribe btc)
         _ <- forever $ threadDelay (1000000 * 60)
         return ()
-
-
--- app :: WS.ClientApp ()
--- app conn = do
---         putStrLn "Connected"
---
---         _ <- forkIO $ forever $ do
---             msg <- WS.receiveData conn
---             liftIO $ T.putStrLn msg
---
---         let loop = do
---                 line <- T.getLine
---                 unless (T.null line) $ WS.sendTextData conn line >> loop
---
---         loop
---         WS.sendClose conn ("Bye!" :: Text)
 
 main :: IO ()
 main = withSocketsDo $

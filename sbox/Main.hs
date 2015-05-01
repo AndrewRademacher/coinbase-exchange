@@ -2,22 +2,19 @@
 
 module Main where
 
-import           Control.Concurrent
-import           Control.Monad
-import           Data.Aeson
 import           Data.Time
 import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
-import           Network.Socket                 (withSocketsDo)
-import qualified Network.WebSockets             as WS
 import           System.Locale
-import           Wuss
 
 import           Coinbase.Exchange.MarketData
 import           Coinbase.Exchange.Socket
 import           Coinbase.Exchange.Types
 import           Coinbase.Exchange.Types.Core
 import           Coinbase.Exchange.Types.Socket
+
+main :: IO ()
+main = putStrLn "Use GHCi."
 
 btc :: ProductId
 btc = "BTC-USD"

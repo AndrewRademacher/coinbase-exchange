@@ -13,6 +13,8 @@ import qualified Network.WebSockets             as WS
 import           System.Locale
 import           Wuss
 
+import           Coinbase.Exchange.MarketData
+import           Coinbase.Exchange.Socket
 import           Coinbase.Exchange.Types
 import           Coinbase.Exchange.Types.Core
 import           Coinbase.Exchange.Types.Socket
@@ -33,20 +35,3 @@ withCoinbase act = do
         case res of
             Right s -> return s
             Left  f -> error $ show f
-
--- Socket Experimientation
-
-app :: WS.ClientApp ()
-app conn = do
-        putStrLn "Connected"
-        _ <- forkIO $ forever $ do
-            ds <- WS.receiveData conn
-            let res = eitherDecode ds
-            print (res :: Either String ExchangeMessage)
-        WS.sendBinaryData conn $ encode (Subscribe btc)
-        _ <- forever $ threadDelay (1000000 * 60)
-        return ()
-
-main :: IO ()
-main = withSocketsDo $
-    runSecureClient "ws-feed.exchange.coinbase.com" 443 "/" app

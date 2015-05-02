@@ -54,6 +54,11 @@ newtype TradeId = TradeId { unTradeId :: Word64 }
 
 --
 
+newtype CurrencyId = CurrencyId { unCurrencyId :: Text }
+    deriving (Eq, Ord, Show, Read, IsString, FromJSON, ToJSON)
+
+--
+
 newtype CoinScientific = CoinScientific { unCoinScientific :: Scientific }
     deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, NFData, Hashable)
 

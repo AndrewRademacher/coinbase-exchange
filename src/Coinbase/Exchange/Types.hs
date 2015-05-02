@@ -12,6 +12,7 @@ import           Control.Monad.Base
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.Trans.Resource
+import           Data.ByteString
 import           Data.Text                    (Text)
 import           Network.HTTP.Conduit
 
@@ -37,13 +38,22 @@ liveSocket = "wss://ws-feed.exchange.coinbase.com"
 
 -- Monad Stack
 
+data Token
+    = Token
+        { key        :: ByteString
+        , secret     :: ByteString
+        , passphrase :: ByteString
+        }
+
 data ExchangeConf
     = ExchangeConf
-        { manager :: Manager
+        { manager   :: Manager
+        , authToken :: Maybe Token
         }
 
 data ExchangeFailure = ParseFailure Text
                      | ApiFailure Text
+                     | AuthenticationRequiredFailure Text
                      deriving (Show)
 
 type Exchange a = ExchangeT IO a

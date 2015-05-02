@@ -169,9 +169,6 @@ instance FromJSON Stats where
 
 -- Exchange Currencies
 
-newtype CurrencyId = CurrencyId { unCurrencyId :: Text }
-    deriving (Eq, Ord, Show, Read, IsString, FromJSON, ToJSON)
-
 data Currency
     = Currency
         { curId      :: CurrencyId

@@ -30,34 +30,34 @@ import           Coinbase.Exchange.Types.MarketData
 
 getProducts :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
             => m [Product]
-getProducts = coinbaseRequest liveRest "/products"
+getProducts = coinbaseRequest False "GET" liveRest "/products" voidBody
 
 -- Order Book
 
 getTopOfBook :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
              => ProductId -> m (Book Aggregate)
-getTopOfBook (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/book?level=1")
+getTopOfBook (ProductId p) = coinbaseRequest False "GET" liveRest ("/products/" ++ T.unpack p ++ "/book?level=1") voidBody
 
 getTop50OfBook :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                => ProductId -> m (Book Aggregate)
-getTop50OfBook (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/book?level=2")
+getTop50OfBook (ProductId p) = coinbaseRequest False "GET" liveRest ("/products/" ++ T.unpack p ++ "/book?level=2") voidBody
 
 getOrderBook :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
              => ProductId -> m (Book OrderId)
-getOrderBook (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/book?level=3")
+getOrderBook (ProductId p) = coinbaseRequest False "GET" liveRest ("/products/" ++ T.unpack p ++ "/book?level=3") voidBody
 
 -- Product Ticker
 
 getProductTicker :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                  => ProductId -> m Tick
-getProductTicker (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/ticker")
+getProductTicker (ProductId p) = coinbaseRequest False "GET" liveRest ("/products/" ++ T.unpack p ++ "/ticker") voidBody
 
 -- Product Trades
 
 -- | Currently Broken: coinbase api doesn't return valid ISO 8601 dates for this route.
 getTrades :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
           => ProductId -> m [Trade]
-getTrades (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/trades")
+getTrades (ProductId p) = coinbaseRequest False "GET" liveRest ("/products/" ++ T.unpack p ++ "/trades") voidBody
 
 -- Historic Rates (Candles)
 
@@ -67,7 +67,7 @@ type Scale      = Int
 
 getHistory :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
            => ProductId -> Maybe StartTime -> Maybe EndTime -> Maybe Scale -> m [Candle]
-getHistory (ProductId p) start end scale = coinbaseRequest liveRest path
+getHistory (ProductId p) start end scale = coinbaseRequest False "GET" liveRest path voidBody
     where path   = "/products/" ++ T.unpack p ++ "/candles?" ++ params
           params = intercalate "&" $ map (\(k, v) -> k ++ "=" ++ v) $ start' ++ end' ++ scale'
           start' = case start of Nothing -> []
@@ -83,16 +83,16 @@ getHistory (ProductId p) start end scale = coinbaseRequest liveRest path
 
 getStats :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
          => ProductId -> m Stats
-getStats (ProductId p) = coinbaseRequest liveRest ("/products/" ++ T.unpack p ++ "/stats")
+getStats (ProductId p) = coinbaseRequest False "GET" liveRest ("/products/" ++ T.unpack p ++ "/stats") voidBody
 
 -- Exchange Currencies
 
 getCurrencies :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
               => m [Currency]
-getCurrencies = coinbaseRequest liveRest "/currencies"
+getCurrencies = coinbaseRequest False "GET" liveRest "/currencies" voidBody
 
 -- Exchange Time
 
 getExchangeTime :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                 => m ExchangeTime
-getExchangeTime = coinbaseRequest liveRest "/time"
+getExchangeTime = coinbaseRequest False "GET" liveRest "/time" voidBody

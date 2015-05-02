@@ -2,15 +2,20 @@
 
 module Main where
 
+import           Control.Monad
+import qualified Data.ByteString.Char8           as CBS
 import           Data.Time
 import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
+import           System.Environment
 import           System.Locale
 
 import           Coinbase.Exchange.MarketData
+import           Coinbase.Exchange.Private
 import           Coinbase.Exchange.Socket
 import           Coinbase.Exchange.Types
 import           Coinbase.Exchange.Types.Core
+import           Coinbase.Exchange.Types.Private
 import           Coinbase.Exchange.Types.Socket
 
 main :: IO ()
@@ -27,8 +32,12 @@ end = Just $ readTime defaultTimeLocale "%FT%X%z" "2015-04-23T20:22:37+0000"
 
 withCoinbase :: Exchange a -> IO a
 withCoinbase act = do
-        mgr <- newManager tlsManagerSettings
-        res <- runExchange (ExchangeConf mgr) act
+        mgr     <- newManager tlsManagerSettings
+        tKey    <- liftM CBS.pack $ getEnv "COINBASE_KEY"
+        tSecret <- liftM CBS.pack $ getEnv "COINBASE_SECRET"
+        tPass   <- liftM CBS.pack $ getEnv "COINBASE_PASSPHRASE"
+
+        res <- runExchange (ExchangeConf mgr (Just $ Token tKey tSecret tPass)) act
         case res of
             Right s -> return s
             Left  f -> error $ show f

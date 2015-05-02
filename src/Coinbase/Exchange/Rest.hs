@@ -38,14 +38,19 @@ coinbaseRequest sgn meth e p ma = do
         conf <- ask
         req  <- parseUrl $ e ++ p
         let req' = req { method         = meth
-                       , requestHeaders = [ ("user-agent", "haskell") ]
+                       , requestHeaders = [ ("user-agent", "haskell")
+                                          , ("accept", "application/json")
+                                          ]
                        }
 
         res <- flip http (manager conf) $ signMessage sgn . encodeBody ma $ req'
         processResponse res
 
 encodeBody :: (ToJSON a) => Maybe a -> Request -> Request
-encodeBody (Just a) req = req { requestBody = RequestBodyBS $ LBS.toStrict $ encode a}
+encodeBody (Just a) req = req { requestHeaders = requestHeaders req ++
+                                               [ ("content-type", "application/json") ]
+                              , requestBody = RequestBodyBS $ LBS.toStrict $ encode a
+                              }
 encodeBody Nothing  req = req
 
 signMessage :: Signed -> Request -> Request

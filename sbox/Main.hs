@@ -4,7 +4,9 @@ module Main where
 
 import           Control.Monad
 import qualified Data.ByteString.Char8           as CBS
+import           Data.Maybe
 import           Data.Time
+import           Data.UUID
 import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
 import           System.Environment
@@ -29,6 +31,9 @@ start = Just $ readTime defaultTimeLocale "%FT%X%z" "2015-04-12T20:22:37+0000"
 
 end :: Maybe UTCTime
 end = Just $ readTime defaultTimeLocale "%FT%X%z" "2015-04-23T20:22:37+0000"
+
+accountId :: AccountId
+accountId = AccountId $ fromJust $ fromString "52072cbb-4e76-496f-a479-166cb4d177fa"
 
 withCoinbase :: Exchange a -> IO a
 withCoinbase act = do

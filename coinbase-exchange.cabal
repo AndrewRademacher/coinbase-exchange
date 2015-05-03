@@ -60,6 +60,7 @@ executable sandbox
                     ,   http-client         ==0.4.*
                     ,   http-client-tls     ==0.2.*
 
+                    ,   uuid
                     ,   text
                     ,   aeson
                     ,   bytestring
@@ -89,6 +90,7 @@ test-suite test-coinbase
                     ,   tasty-quickcheck    ==0.8.*
                     ,   tasty-hunit         ==0.9.*
 
+                    ,   uuid
                     ,   bytestring
                     ,   time
                     ,   old-locale

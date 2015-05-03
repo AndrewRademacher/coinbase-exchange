@@ -5,7 +5,36 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
-module Coinbase.Exchange.Types where
+module Coinbase.Exchange.Types
+    ( Endpoint
+    , Path
+
+    , website
+    , sandboxRest
+    , sandboxSocket
+    , liveRest
+    , liveSocket
+
+    , Key
+    , Secret
+    , Passphrase
+
+    , Token
+    , key
+    , secret
+    , passphrase
+    , mkToken
+
+    , ExchangeConf (..)
+    , ExchangeFailure (..)
+
+    , Exchange
+    , ExceptT
+    , runExchange
+    , runExchangeT
+
+    , getManager
+    ) where
 
 import           Control.Applicative
 import           Control.Monad.Base
@@ -13,6 +42,7 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.Trans.Resource
 import           Data.ByteString
+import qualified Data.ByteString.Base64       as Base64
 import           Data.Text                    (Text)
 import           Network.HTTP.Conduit
 
@@ -38,12 +68,21 @@ liveSocket = "wss://ws-feed.exchange.coinbase.com"
 
 -- Monad Stack
 
+type Key        = ByteString
+type Secret     = ByteString
+type Passphrase = ByteString
+
 data Token
     = Token
         { key        :: ByteString
         , secret     :: ByteString
         , passphrase :: ByteString
         }
+
+mkToken :: Key -> Secret -> Passphrase -> Either String Token
+mkToken k s p = case Base64.decode s of
+                    Right s' -> Right $ Token k s' p
+                    Left  e  -> Left e
 
 data ExchangeConf
     = ExchangeConf
@@ -54,6 +93,7 @@ data ExchangeConf
 data ExchangeFailure = ParseFailure Text
                      | ApiFailure Text
                      | AuthenticationRequiredFailure Text
+                     | AuthenticationRequiresByteStrings
                      deriving (Show)
 
 type Exchange a = ExchangeT IO a

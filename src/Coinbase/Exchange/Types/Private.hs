@@ -22,7 +22,7 @@ data Account
         { accId        :: AccountId
         , accBalance   :: CoinScientific
         , accHold      :: CoinScientific
-        , accAvaliable :: CoinScientific
+        , accAvailable :: CoinScientific
         , accCurrency  :: CurrencyId
         }
     deriving (Show, Generic)

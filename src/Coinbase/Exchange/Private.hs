@@ -14,4 +14,4 @@ import           Coinbase.Exchange.Types.Private
 
 getAccountList :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                => m [Account]
-getAccountList = coinbaseRequest True "POST" liveRest "/accounts" voidBody
+getAccountList = coinbaseRequest True "GET" liveRest "/accounts" voidBody

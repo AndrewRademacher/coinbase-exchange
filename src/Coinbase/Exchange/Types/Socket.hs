@@ -83,7 +83,7 @@ data ExchangeMessage
     deriving (Eq, Show, Read, Generic)
 
 instance ToJSON ExchangeMessage where
-    toJSON = genericToJSON coinbaseSumTypeOptions
+    toJSON = genericToJSON coinbaseAesonOptions
 
 instance FromJSON ExchangeMessage where
-    parseJSON = genericParseJSON coinbaseSumTypeOptions
+    parseJSON = genericParseJSON coinbaseAesonOptions

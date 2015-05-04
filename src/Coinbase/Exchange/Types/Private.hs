@@ -30,10 +30,10 @@ data Account
     deriving (Show, Generic)
 
 instance ToJSON Account where
-    toJSON = genericToJSON $ aesonPrefix snakeCase
+    toJSON = genericToJSON coinbaseAesonOptions
 
 instance FromJSON Account where
-    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+    parseJSON = genericParseJSON coinbaseAesonOptions
 
 --
 
@@ -52,10 +52,10 @@ data Entry
     deriving (Show, Generic)
 
 instance ToJSON Entry where
-    toJSON = genericToJSON $ aesonPrefix snakeCase
+    toJSON = genericToJSON coinbaseAesonOptions
 
 instance FromJSON Entry where
-    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+    parseJSON = genericParseJSON coinbaseAesonOptions
 
 data EntryType
     = Match
@@ -77,10 +77,10 @@ data EntryDetails
     deriving (Show, Generic)
 
 instance ToJSON EntryDetails where
-    toJSON = genericToJSON $ aesonPrefix snakeCase
+    toJSON = genericToJSON coinbaseAesonOptions
 
 instance FromJSON EntryDetails where
-    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+    parseJSON = genericParseJSON coinbaseAesonOptions
 
 --
 
@@ -107,10 +107,10 @@ data Hold
     deriving (Show, Generic)
 
 instance ToJSON Hold where
-    toJSON = genericToJSON coinbaseSumTypeOptions
+    toJSON = genericToJSON coinbaseAesonOptions
 
 instance FromJSON Hold where
-    parseJSON = genericParseJSON coinbaseSumTypeOptions
+    parseJSON = genericParseJSON coinbaseAesonOptions
 
 --
 

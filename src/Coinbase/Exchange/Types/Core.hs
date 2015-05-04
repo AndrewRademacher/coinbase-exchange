@@ -77,8 +77,8 @@ maybeRead = fmap fst . listToMaybe . reads
 
 ----
 
-coinbaseSumTypeOptions :: Options
-coinbaseSumTypeOptions = (aesonPrefix snakeCase)
+coinbaseAesonOptions :: Options
+coinbaseAesonOptions = (aesonPrefix snakeCase)
     { constructorTagModifier = map toLower
     , sumEncoding = defaultTaggedObject
                         { tagFieldName = "type"

@@ -40,7 +40,7 @@ data Product
     deriving (Show, Generic)
 
 instance FromJSON Product where
-    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+    parseJSON = genericParseJSON coinbaseAesonOptions
 
 -- Order Book
 
@@ -53,7 +53,7 @@ data Book a
     deriving (Show, Generic)
 
 instance (FromJSON a) => FromJSON (Book a) where
-    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+    parseJSON = genericParseJSON coinbaseAesonOptions
 
 data Ask a = Ask Price Size a
     deriving (Eq, Ord, Show, Read, Generic)
@@ -85,10 +85,10 @@ data Tick
     deriving (Show, Generic)
 
 instance ToJSON Tick where
-    toJSON = genericToJSON $ aesonPrefix snakeCase
+    toJSON = genericToJSON coinbaseAesonOptions
 
 instance FromJSON Tick where
-    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+    parseJSON = genericParseJSON coinbaseAesonOptions
 
 -- Product Trades
 
@@ -103,10 +103,10 @@ data Trade
     deriving (Show, Generic)
 
 instance ToJSON Trade where
-    toJSON = genericToJSON $ aesonPrefix snakeCase
+    toJSON = genericToJSON coinbaseAesonOptions
 
 instance FromJSON Trade where
-    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+    parseJSON = genericParseJSON coinbaseAesonOptions
 
 -- Historic Rates (Candles)
 
@@ -178,10 +178,10 @@ data Currency
     deriving (Show, Generic)
 
 instance ToJSON Currency where
-    toJSON = genericToJSON $ aesonPrefix snakeCase
+    toJSON = genericToJSON coinbaseAesonOptions
 
 instance FromJSON Currency where
-    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+    parseJSON = genericParseJSON coinbaseAesonOptions
 
 -- Exchange Time
 
@@ -193,4 +193,4 @@ data ExchangeTime
     deriving (Show, Generic)
 
 instance FromJSON ExchangeTime where
-    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+    parseJSON = genericParseJSON coinbaseAesonOptions

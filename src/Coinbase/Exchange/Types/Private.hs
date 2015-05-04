@@ -167,6 +167,29 @@ instance ToJSON OrderConfirmation where
 instance FromJSON OrderConfirmation where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
+data Order
+    = Order
+        { orderId         :: OrderId
+        , orderSize       :: Size
+        , orderPrice      :: Price
+        , orderProductId  :: ProductId
+        , orderStatus     :: OrderStatus
+        , orderFilledSize :: Size
+        , orderFilledFees :: Price
+        , orderSettled    :: Bool
+        , orderSide       :: Side
+        , orderCreatedAt  :: UTCTime
+        , orderDoneAt     :: Maybe UTCTime
+        , orderDoneReason :: Maybe Reason
+        }
+    deriving (Show, Generic)
+
+instance ToJSON Order where
+    toJSON = genericToJSON coinbaseAesonOptions
+
+instance FromJSON Order where
+    parseJSON = genericParseJSON coinbaseAesonOptions
+
 -- Transfers
 
 newtype TransferId = TransferId { unTransferId :: UUID }

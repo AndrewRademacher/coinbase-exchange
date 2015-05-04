@@ -7,6 +7,8 @@ module Coinbase.Exchange.Private where
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.Trans.Resource
+import           Data.Char
+import           Data.List
 import           Data.UUID
 
 import           Coinbase.Exchange.Rest
@@ -41,3 +43,9 @@ createOrder = liftM ocId . coinbaseRequest True "POST" "/orders" . Just
 cancelOrder :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
             => OrderId -> m ()
 cancelOrder (OrderId o) = coinbaseRequest True "DELETE" ("/orders/" ++ toString o) voidBody
+
+getOrderList :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+             => [OrderStatus] -> m [Order]
+getOrderList os = coinbaseRequest True "GET" ("/orders?" ++ query os) voidBody
+    where query [] = "status=all"
+          query xs = intercalate "&" $ map (\x -> "status=" ++ map toLower (show x)) xs

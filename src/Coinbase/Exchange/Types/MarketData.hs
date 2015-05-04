@@ -23,7 +23,7 @@ import qualified Data.Vector                  as V
 import           Data.Word
 import           GHC.Generics
 
-import           Coinbase.Exchange.Types.Core
+import           Coinbase.Exchange.Types.Core hiding (OrderStatus (..))
 
 -- Products
 

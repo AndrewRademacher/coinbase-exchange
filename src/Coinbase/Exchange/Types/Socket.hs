@@ -5,7 +5,6 @@
 module Coinbase.Exchange.Types.Socket where
 
 import           Data.Aeson.Types
-import           Data.Char
 import           Data.Text                    (Text)
 import           Data.Time
 import           Data.Word
@@ -15,15 +14,6 @@ import           Coinbase.Exchange.Types.Core
 
 newtype Sequence = Sequence { unSequence :: Word64 }
     deriving (Eq, Ord, Num, Show, Read, Generic, FromJSON, ToJSON)
-
-data Reason = Filled | Canceled
-    deriving (Eq, Show, Read, Generic)
-
-instance ToJSON Reason where
-    toJSON = genericToJSON defaultOptions { constructorTagModifier = map toLower }
-
-instance FromJSON Reason where
-    parseJSON = genericParseJSON defaultOptions { constructorTagModifier = map toLower }
 
 data ExchangeMessage
     = Subscribe

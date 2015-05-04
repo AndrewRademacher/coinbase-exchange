@@ -58,12 +58,38 @@ newtype TradeId = TradeId { unTradeId :: Word64 }
 newtype CurrencyId = CurrencyId { unCurrencyId :: Text }
     deriving (Eq, Ord, Show, Read, IsString, FromJSON, ToJSON)
 
+----
+
+data OrderStatus
+    = Done
+    | Settled
+    | Open
+    | Pending
+    deriving (Eq, Show, Read, Data, Typeable, Generic)
+
+instance ToJSON OrderStatus where
+    toJSON = genericToJSON coinbaseAesonOptions
+
+instance FromJSON OrderStatus where
+    parseJSON = genericParseJSON coinbaseAesonOptions
+
 --
 
 newtype ClientOrderId = ClientOrderId { unClientOrderId :: UUID }
     deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
 
 --
+
+data Reason = Filled | Canceled
+    deriving (Eq, Show, Read, Generic)
+
+instance ToJSON Reason where
+    toJSON = genericToJSON defaultOptions { constructorTagModifier = map toLower }
+
+instance FromJSON Reason where
+    parseJSON = genericParseJSON defaultOptions { constructorTagModifier = map toLower }
+
+----
 
 newtype CoinScientific = CoinScientific { unCoinScientific :: Scientific }
     deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, NFData, Hashable)

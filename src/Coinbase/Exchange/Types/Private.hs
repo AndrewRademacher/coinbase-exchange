@@ -37,9 +37,12 @@ instance FromJSON Account where
 
 --
 
+newtype EntryId = EntryId { unEntryId :: UUID }
+    deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
+
 data Entry
     = Entry
-        { entryId        :: Text
+        { entryId        :: EntryId
         , entryCreatedAt :: UTCTime
         , entryAmount    :: CoinScientific
         , entryBalance   :: CoinScientific

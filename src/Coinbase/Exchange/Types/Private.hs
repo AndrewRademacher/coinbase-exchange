@@ -1,9 +1,11 @@
 {-# LANGUAGE DeriveDataTypeable         #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
 
 module Coinbase.Exchange.Types.Private where
 
+import           Control.Monad
 import           Data.Aeson.Casing
 import           Data.Aeson.Types
 import           Data.Char
@@ -124,10 +126,17 @@ data SelfTrade
     deriving (Eq, Show, Read, Data, Typeable, Generic)
 
 instance ToJSON SelfTrade where
-    toJSON = genericToJSON coinbaseAesonOptions
+    toJSON DecrementAndCancel = String "dc"
+    toJSON CancelOldest       = String "co"
+    toJSON CancelNewest       = String "cn"
+    toJSON CancelBoth         = String "cb"
 
 instance FromJSON SelfTrade where
-    parseJSON = genericParseJSON coinbaseAesonOptions
+    parseJSON (String "dc") = return DecrementAndCancel
+    parseJSON (String "co") = return CancelOldest
+    parseJSON (String "cn") = return CancelNewest
+    parseJSON (String "cb") = return CancelBoth
+    parseJSON _ = mzero
 
 data NewOrder
     = NewOrder

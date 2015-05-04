@@ -37,3 +37,7 @@ getAccountHolds (AccountId i) = coinbaseRequest True "GET" ("/accounts/" ++ toSt
 createOrder :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
             => NewOrder -> m OrderId
 createOrder = liftM ocId . coinbaseRequest True "POST" "/orders" . Just
+
+cancelOrder :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+            => OrderId -> m ()
+cancelOrder (OrderId o) = coinbaseRequest True "DELETE" ("/orders/" ++ toString o) voidBody

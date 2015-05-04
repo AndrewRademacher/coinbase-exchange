@@ -43,7 +43,7 @@ withCoinbase act = do
         tPass   <- liftM CBS.pack $ getEnv "COINBASE_PASSPHRASE"
 
         case mkToken tKey tSecret tPass of
-            Right tok -> do res <- runExchange (ExchangeConf mgr (Just tok)) act
+            Right tok -> do res <- runExchange (ExchangeConf mgr (Just tok) Live) act
                             case res of
                                 Right s -> return s
                                 Left  f -> error $ show f

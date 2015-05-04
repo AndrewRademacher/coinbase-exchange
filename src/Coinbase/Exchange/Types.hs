@@ -6,7 +6,8 @@
 {-# LANGUAGE UndecidableInstances       #-}
 
 module Coinbase.Exchange.Types
-    ( Endpoint
+    ( ApiType (..)
+    , Endpoint
     , Path
 
     , website
@@ -48,6 +49,11 @@ import           Network.HTTP.Conduit
 
 -- API URLs
 
+data ApiType
+    = Sandbox
+    | Live
+    deriving (Show)
+
 type Endpoint = String
 type Path     = String
 
@@ -88,6 +94,7 @@ data ExchangeConf
     = ExchangeConf
         { manager   :: Manager
         , authToken :: Maybe Token
+        , apiType   :: ApiType
         }
 
 data ExchangeFailure = ParseFailure Text

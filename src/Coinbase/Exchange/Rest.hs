@@ -40,10 +40,12 @@ coinbaseRequest :: ( ToJSON a
                    , MonadResource m
                    , MonadReader ExchangeConf m
                    , MonadError ExchangeFailure m )
-                => Signed -> Method -> Endpoint -> Path -> Maybe a -> m b
-coinbaseRequest sgn meth e p ma = do
+                => Signed -> Method -> Path -> Maybe a -> m b
+coinbaseRequest sgn meth p ma = do
         conf <- ask
-        req  <- parseUrl $ e ++ p
+        req  <- case apiType conf of
+                    Sandbox -> parseUrl $ sandboxRest ++ p
+                    Live    -> parseUrl $ liveRest ++ p
         let req' = req { method         = meth
                        , requestHeaders = [ ("user-agent", "haskell")
                                           , ("accept", "application/json")

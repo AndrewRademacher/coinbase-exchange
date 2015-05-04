@@ -81,3 +81,38 @@ instance ToJSON EntryDetails where
 
 instance FromJSON EntryDetails where
     parseJSON = genericParseJSON $ aesonPrefix snakeCase
+
+--
+
+newtype HoldId = HoldId { unHoldId :: UUID }
+    deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
+
+data Hold
+    = OrderHold
+        { holdId        :: HoldId
+        , holdAccountId :: AccountId
+        , holdCreatedAt :: UTCTime
+        , holdUpdatedAt :: UTCTime
+        , holdAmount    :: CoinScientific
+        , holdOrderRef  :: OrderId
+        }
+    | TransferHold
+        { holdId          :: HoldId
+        , holdAccountId   :: AccountId
+        , holdCreatedAt   :: UTCTime
+        , holdUpdatedAt   :: UTCTime
+        , holdAmount      :: CoinScientific
+        , holdTransferRef :: TransferId
+        }
+    deriving (Show, Generic)
+
+instance ToJSON Hold where
+    toJSON = genericToJSON coinbaseSumTypeOptions
+
+instance FromJSON Hold where
+    parseJSON = genericParseJSON coinbaseSumTypeOptions
+
+--
+
+newtype TransferId = TransferId { unTransferId :: UUID }
+    deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)

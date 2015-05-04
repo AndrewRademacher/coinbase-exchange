@@ -24,3 +24,7 @@ getAccount (AccountId i) = coinbaseRequest True "GET" liveRest ("/accounts/" ++ 
 getAccountLedger :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                  => AccountId -> m [Entry]
 getAccountLedger (AccountId i) = coinbaseRequest True "GET" liveRest ("/accounts/" ++ toString i ++ "/ledger") voidBody
+
+getAccountHolds :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+                => AccountId -> m [Hold]
+getAccountHolds (AccountId i) = coinbaseRequest True "GET" liveRest ("/accounts/" ++ toString i ++ "/holds") voidBody

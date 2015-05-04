@@ -6,6 +6,7 @@ module Coinbase.Exchange.Types.Core where
 
 import           Control.Applicative
 import           Control.DeepSeq
+import           Data.Aeson.Casing
 import           Data.Aeson.Types
 import           Data.Char
 import           Data.Data
@@ -73,3 +74,13 @@ instance FromJSON CoinScientific where
 
 maybeRead :: (Read a) => String -> Maybe a
 maybeRead = fmap fst . listToMaybe . reads
+
+----
+
+coinbaseSumTypeOptions :: Options
+coinbaseSumTypeOptions = (aesonPrefix snakeCase)
+    { constructorTagModifier = map toLower
+    , sumEncoding = defaultTaggedObject
+                        { tagFieldName = "type"
+                        }
+    }

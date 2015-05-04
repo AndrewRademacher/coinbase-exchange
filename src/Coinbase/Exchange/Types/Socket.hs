@@ -4,7 +4,6 @@
 
 module Coinbase.Exchange.Types.Socket where
 
-import           Data.Aeson.Casing
 import           Data.Aeson.Types
 import           Data.Char
 import           Data.Text                    (Text)
@@ -84,15 +83,7 @@ data ExchangeMessage
     deriving (Eq, Show, Read, Generic)
 
 instance ToJSON ExchangeMessage where
-    toJSON = genericToJSON coinbaseOptions
+    toJSON = genericToJSON coinbaseSumTypeOptions
 
 instance FromJSON ExchangeMessage where
-    parseJSON = genericParseJSON coinbaseOptions
-
-coinbaseOptions :: Options
-coinbaseOptions = (aesonPrefix snakeCase)
-    { constructorTagModifier = map toLower
-    , sumEncoding = defaultTaggedObject
-                        { tagFieldName = "type"
-                        }
-    }
+    parseJSON = genericParseJSON coinbaseSumTypeOptions

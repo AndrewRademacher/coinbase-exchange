@@ -49,3 +49,7 @@ getOrderList :: (MonadResource m, MonadReader ExchangeConf m, MonadError Exchang
 getOrderList os = coinbaseRequest True "GET" ("/orders?" ++ query os) voidBody
     where query [] = "status=all"
           query xs = intercalate "&" $ map (\x -> "status=" ++ map toLower (show x)) xs
+
+getOrder :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+         => OrderId -> m Order
+getOrder (OrderId o) = coinbaseRequest True "GET" ("/orders/" ++ toString o) voidBody

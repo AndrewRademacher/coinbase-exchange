@@ -37,6 +37,7 @@ data ExchangeMessage
         , msgSize      :: Size
         , msgPrice     :: Price
         , msgSide      :: Side
+        , msgClientOid :: Maybe ClientOrderId
         }
     | Open
         { msgTime          :: UTCTime

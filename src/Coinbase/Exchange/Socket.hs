@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 module Coinbase.Exchange.Socket where
 
@@ -21,7 +22,10 @@ app conn = do
         _ <- forkIO $ forever $ do
             ds <- WS.receiveData conn
             let res = eitherDecode ds
-            print (res :: Either String ExchangeMessage)
+            case res :: Either String ExchangeMessage of
+                Left er -> print er
+                Right (Received{..}) -> print msgClientOid
+                Right _ -> return ()
         WS.sendBinaryData conn $ encode (Subscribe btc)
         _ <- forever $ threadDelay (1000000 * 60)
         return ()

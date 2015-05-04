@@ -144,7 +144,7 @@ data NewOrder
         , noPrice     :: Price
         , noSide      :: Side
         , noProductId :: ProductId
-        , noClientId  :: Maybe ClientOrderId
+        , noClientOid :: Maybe ClientOrderId
         , noSelfTrade :: SelfTrade
         }
     deriving (Show, Generic)

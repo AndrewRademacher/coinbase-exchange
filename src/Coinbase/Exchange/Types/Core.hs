@@ -60,6 +60,11 @@ newtype CurrencyId = CurrencyId { unCurrencyId :: Text }
 
 --
 
+newtype ClientOrderId = ClientOrderId { unClientOrderId :: UUID }
+    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+
+--
+
 newtype CoinScientific = CoinScientific { unCoinScientific :: Scientific }
     deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, NFData, Hashable)
 

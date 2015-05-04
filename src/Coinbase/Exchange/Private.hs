@@ -11,7 +11,10 @@ import           Data.UUID
 
 import           Coinbase.Exchange.Rest
 import           Coinbase.Exchange.Types
+import           Coinbase.Exchange.Types.Core
 import           Coinbase.Exchange.Types.Private
+
+-- Accounts
 
 getAccountList :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                => m [Account]
@@ -28,3 +31,9 @@ getAccountLedger (AccountId i) = coinbaseRequest True "GET" ("/accounts/" ++ toS
 getAccountHolds :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                 => AccountId -> m [Hold]
 getAccountHolds (AccountId i) = coinbaseRequest True "GET" ("/accounts/" ++ toString i ++ "/holds") voidBody
+
+-- Orders
+
+createOrder :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+            => NewOrder -> m OrderId
+createOrder = liftM ocId . coinbaseRequest True "POST" "/orders" . Just

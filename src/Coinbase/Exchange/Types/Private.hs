@@ -16,6 +16,8 @@ import           GHC.Generics
 import           Coinbase.Exchange.Types
 import           Coinbase.Exchange.Types.Core
 
+-- Accounts
+
 newtype AccountId = AccountId { unAccountId :: UUID }
     deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
 
@@ -112,7 +114,51 @@ instance ToJSON Hold where
 instance FromJSON Hold where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
---
+-- Orders
+
+data SelfTrade
+    = DecrementAndCancel
+    | CancelOldest
+    | CancelNewest
+    | CancelBoth
+    deriving (Eq, Show, Read, Data, Typeable, Generic)
+
+instance ToJSON SelfTrade where
+    toJSON = genericToJSON coinbaseAesonOptions
+
+instance FromJSON SelfTrade where
+    parseJSON = genericParseJSON coinbaseAesonOptions
+
+data NewOrder
+    = NewOrder
+        { noSize      :: Size
+        , noPrice     :: Price
+        , noSide      :: Side
+        , noProductId :: ProductId
+        , noClientId  :: Maybe ClientOrderId
+        , noSelfTrade :: SelfTrade
+        }
+    deriving (Show, Generic)
+
+instance ToJSON NewOrder where
+    toJSON = genericToJSON coinbaseAesonOptions
+
+instance FromJSON NewOrder where
+    parseJSON = genericParseJSON coinbaseAesonOptions
+
+data OrderConfirmation
+    = OrderConfirmation
+        { ocId :: OrderId
+        }
+    deriving (Show, Generic)
+
+instance ToJSON OrderConfirmation where
+    toJSON = genericToJSON coinbaseAesonOptions
+
+instance FromJSON OrderConfirmation where
+    parseJSON = genericParseJSON coinbaseAesonOptions
+
+-- Transfers
 
 newtype TransferId = TransferId { unTransferId :: UUID }
     deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)

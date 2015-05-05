@@ -64,3 +64,9 @@ getFills moid mpid = coinbaseRequest True "GET" ("/fills?" ++ oid ++ "&" ++ pid)
                              Nothing -> "order_id=all"
           pid = case mpid of Just  v -> "product_id=" ++ T.unpack (unProductId v)
                              Nothing -> "product_id=all"
+
+-- Transfers
+
+createTransfer :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+               => Transfer -> m ()
+createTransfer = coinbaseRequest True "POST" "/transfers" . Just

@@ -231,3 +231,23 @@ instance FromJSON Fill where
 
 newtype TransferId = TransferId { unTransferId :: UUID }
     deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
+
+newtype CoinbaseAccountId = CoinbaseAccountId { unCoinbaseAccountId :: UUID }
+    deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
+
+data Transfer
+    = Deposit
+        { transAmount          :: Size
+        , transCoinbaseAccount :: CoinbaseAccountId
+        }
+    | Withdraw
+        { transAmount          :: Size
+        , transCoinbaseAccount :: CoinbaseAccountId
+        }
+    deriving (Show, Generic)
+
+instance ToJSON Transfer where
+    toJSON = genericToJSON coinbaseAesonOptions
+
+instance FromJSON Transfer where
+    parseJSON = genericParseJSON coinbaseAesonOptions

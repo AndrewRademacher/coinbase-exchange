@@ -9,6 +9,7 @@ import           Control.Monad.Reader
 import           Control.Monad.Trans.Resource
 import           Data.Char
 import           Data.List
+import qualified Data.Text                       as T
 import           Data.UUID
 
 import           Coinbase.Exchange.Rest
@@ -53,3 +54,13 @@ getOrderList os = coinbaseRequest True "GET" ("/orders?" ++ query os) voidBody
 getOrder :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
          => OrderId -> m Order
 getOrder (OrderId o) = coinbaseRequest True "GET" ("/orders/" ++ toString o) voidBody
+
+-- Fills
+
+getFills :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+         => Maybe OrderId -> Maybe ProductId -> m [Fill]
+getFills moid mpid = coinbaseRequest True "GET" ("/fills?" ++ oid ++ "&" ++ pid) voidBody
+    where oid = case moid of Just  v -> "order_id=" ++ toString (unOrderId v)
+                             Nothing -> "order_id=all"
+          pid = case mpid of Just  v -> "product_id=" ++ T.unpack (unProductId v)
+                             Nothing -> "product_id=all"

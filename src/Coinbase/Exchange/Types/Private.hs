@@ -190,6 +190,43 @@ instance ToJSON Order where
 instance FromJSON Order where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
+-- Fills
+
+data Liquidity
+    = Maker
+    | Taker
+    deriving (Eq, Show, Read, Data, Typeable, Generic)
+
+instance ToJSON Liquidity where
+    toJSON Maker = String "M"
+    toJSON Taker = String "T"
+
+instance FromJSON Liquidity where
+    parseJSON (String "M") = return Maker
+    parseJSON (String "T") = return Taker
+    parseJSON _            = mzero
+
+data Fill
+    = Fill
+        { fillTradeId   :: TradeId
+        , fillProductId :: ProductId
+        , fillPrice     :: Price
+        , fillSize      :: Size
+        , fillOrderId   :: OrderId
+        , fillCreatedAt :: UTCTime
+        , fillLiquidity :: Liquidity
+        , fillFee       :: Price
+        , fillSettled   :: Bool
+        , fillSide      :: Side
+        }
+    deriving (Show, Generic)
+
+instance ToJSON Fill where
+    toJSON = genericToJSON coinbaseAesonOptions
+
+instance FromJSON Fill where
+    parseJSON = genericParseJSON coinbaseAesonOptions
+
 -- Transfers
 
 newtype TransferId = TransferId { unTransferId :: UUID }

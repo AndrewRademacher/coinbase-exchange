@@ -19,7 +19,7 @@ main = do
         tPass   <- liftM CBS.pack $ getEnv "COINBASE_PASSPHRASE"
 
         case mkToken tKey tSecret tPass of
-            Right tok -> defaultMain (tests $ ExchangeConf mgr (Just tok) Live)
+            Right tok -> defaultMain (tests $ ExchangeConf mgr (Just tok) Sandbox)
             Left   er -> error $ show er
 
 tests :: ExchangeConf -> TestTree

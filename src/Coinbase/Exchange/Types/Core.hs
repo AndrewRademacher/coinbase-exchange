@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DeriveDataTypeable         #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -17,10 +18,17 @@ import           Data.Scientific
 import           Data.String
 import           Data.Text           (Text)
 import qualified Data.Text           as T
+import           Data.Time
 import           Data.UUID
 import           Data.UUID.Aeson     ()
 import           Data.Word
 import           GHC.Generics
+#if MIN_VERSION_time(1,5,0)
+import           Data.Time.Format    (dateTimeFmt, defaultTimeLocale)
+#else
+import           System.Locale       (dateTimeFmt, defaultTimeLocale)
+#endif
+
 
 newtype ProductId = ProductId { unProductId :: Text }
     deriving (Eq, Ord, Show, Read, IsString, FromJSON, ToJSON)
@@ -105,6 +113,24 @@ instance FromJSON CoinScientific where
 
 maybeRead :: (Read a) => String -> Maybe a
 maybeRead = fmap fst . listToMaybe . reads
+
+----
+
+newtype CoinbaseTime = CoinbaseTime { unCoinbaseTime :: UTCTime }
+    deriving (Eq, Ord, Show, Read, Data, Typeable, NFData)
+
+instance ToJSON CoinbaseTime where
+    toJSON (CoinbaseTime t) = String $ T.pack $
+        formatTime defaultTimeLocale coinbaseTimeFormat t ++ "00"
+
+instance FromJSON CoinbaseTime where
+    parseJSON = withText "Coinbase Time" $ \t ->
+        case parseTime defaultTimeLocale coinbaseTimeFormat (T.unpack t ++ "00") of
+            Just d -> pure $ CoinbaseTime d
+            _      -> fail "could not parse coinbase time format."
+
+coinbaseTimeFormat :: String
+coinbaseTimeFormat = "%F %T%Q%z"
 
 ----
 

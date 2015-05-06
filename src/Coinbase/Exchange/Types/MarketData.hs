@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -80,7 +79,7 @@ data Tick
         { tickTradeId :: Word64
         , tickPrice   :: Price
         , tickSize    :: Size
-        , tickTime    :: UTCTime
+        , tickTime    :: Maybe UTCTime
         }
     deriving (Show, Generic)
 
@@ -94,19 +93,29 @@ instance FromJSON Tick where
 
 data Trade
     = Trade
-        { tradeTime  :: UTCTime
-        , tradeId    :: TradeId
-        , tradePrice :: Price
-        , tradeSize  :: Size
-        , tradeSide  :: Side
+        { tradeTime    :: UTCTime
+        , tradeTradeId :: TradeId
+        , tradePrice   :: Price
+        , tradeSize    :: Size
+        , tradeSide    :: Side
         }
     deriving (Show, Generic)
 
 instance ToJSON Trade where
-    toJSON = genericToJSON coinbaseAesonOptions
+    toJSON Trade{..} = object [ "time"      .= CoinbaseTime tradeTime
+                              , "trade_id"  .= tradeTradeId
+                              , "price"     .= tradePrice
+                              , "size"      .= tradeSize
+                              , "side"      .= tradeSide
+                              ]
 
 instance FromJSON Trade where
-    parseJSON = genericParseJSON coinbaseAesonOptions
+    parseJSON (Object m) = Trade <$> liftM unCoinbaseTime (m .: "time")
+                                 <*> m .: "trade_id"
+                                 <*> m .: "price"
+                                 <*> m .: "size"
+                                 <*> m .: "side"
+    parseJSON _ = mzero
 
 -- Historic Rates (Candles)
 

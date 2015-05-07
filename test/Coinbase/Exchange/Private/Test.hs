@@ -34,7 +34,7 @@ tests conf = testGroup "Private"
         , case_parse conf "getAccount" $ liftIO (readIORef accountId) >>= getAccount . fromJust
         , case_parse conf "getAccountLedger" $ liftIO (readIORef accountId) >>= getAccountLedger . fromJust
         , case_placeOrder conf
-        , case_parse conf "getOrderList" $ getOrderList [Pending]
+        , case_parse conf "getOrderList" $ getOrderList [Open, Pending]
         , case_parse conf "getOrder" $ liftIO (readIORef cancelOrderId) >>= getOrder . fromJust
         , case_cancelOrder conf
         ]

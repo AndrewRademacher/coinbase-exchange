@@ -94,7 +94,7 @@ signMessage True meth req = do
         conf <- ask
         case authToken conf of
             Just tok -> do time <- liftM (realToFrac . utcTimeToPOSIXSeconds) (liftIO getCurrentTime)
-                                    >>= \t -> return . CBS.pack $ printf "%.3f" (t::Double)
+                                    >>= \t -> return . CBS.pack $ printf "%.0f" (t::Double)
                            rBody <- pullBody $ requestBody req
                            let presign = CBS.concat [time, meth, path req, rBody]
                                sign    = toBytes (hmac (secret tok) presign :: HMAC SHA256)

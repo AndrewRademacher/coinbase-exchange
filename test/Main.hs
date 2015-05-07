@@ -10,7 +10,7 @@ import           Test.Tasty
 import           Coinbase.Exchange.Types
 
 import qualified Coinbase.Exchange.MarketData.Test as MarketData
-
+import qualified Coinbase.Exchange.Private.Test    as Private
 main :: IO ()
 main = do
         mgr     <- newManager tlsManagerSettings
@@ -25,4 +25,5 @@ main = do
 tests :: ExchangeConf -> TestTree
 tests conf = testGroup "Tests"
         [ MarketData.tests conf
+        , Private.tests conf
         ]

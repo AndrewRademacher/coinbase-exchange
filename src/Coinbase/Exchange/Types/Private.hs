@@ -2,9 +2,11 @@
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RecordWildCards            #-}
 
 module Coinbase.Exchange.Types.Private where
 
+import           Control.Applicative
 import           Control.Monad
 import           Data.Aeson.Casing
 import           Data.Aeson.Types
@@ -13,6 +15,7 @@ import           Data.Data
 import           Data.Text                    (Text)
 import           Data.Time
 import           Data.UUID
+import           Data.Word
 import           GHC.Generics
 
 import           Coinbase.Exchange.Types
@@ -41,8 +44,8 @@ instance FromJSON Account where
 
 --
 
-newtype EntryId = EntryId { unEntryId :: UUID }
-    deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
+newtype EntryId = EntryId { unEntryId :: Word64 }
+    deriving (Eq, Show, Num, Read, Data, Typeable, Generic, FromJSON, ToJSON)
 
 data Entry
     = Entry
@@ -56,14 +59,28 @@ data Entry
     deriving (Show, Generic)
 
 instance ToJSON Entry where
-    toJSON = genericToJSON coinbaseAesonOptions
+    toJSON Entry{..} = object [ "id"         .= entryId
+                              , "created_at" .= CoinbaseTime entryCreatedAt
+                              , "amount"     .= entryAmount
+                              , "balance"    .= entryBalance
+                              , "type"       .= entryType
+                              , "details"    .= entryDetails
+                              ]
 
 instance FromJSON Entry where
-    parseJSON = genericParseJSON coinbaseAesonOptions
+    parseJSON (Object m) = Entry
+        <$> m .: "id"
+        <*> liftM unCoinbaseTime (m .: "created_at")
+        <*> m .: "amount"
+        <*> m .: "balance"
+        <*> m .: "type"
+        <*> m .: "details"
+    parseJSON _ = mzero
 
 data EntryType
     = Match
     | Fee
+    | Transfer
     deriving (Eq, Show, Read, Data, Typeable, Generic)
 
 instance ToJSON EntryType where
@@ -74,9 +91,9 @@ instance FromJSON EntryType where
 
 data EntryDetails
     = EntryDetails
-        { detailOrderId   :: OrderId
-        , detailTradeId   :: TradeId
-        , detailProductId :: ProductId
+        { detailOrderId   :: Maybe OrderId
+        , detailTradeId   :: Maybe TradeId
+        , detailProductId :: Maybe ProductId
         }
     deriving (Show, Generic)
 

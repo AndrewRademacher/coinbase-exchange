@@ -191,8 +191,8 @@ data Order
         , orderPrice      :: Price
         , orderProductId  :: ProductId
         , orderStatus     :: OrderStatus
-        , orderFilledSize :: Size
-        , orderFilledFees :: Price
+        , orderFilledSize :: Maybe Size
+        , orderFilledFees :: Maybe Price
         , orderSettled    :: Bool
         , orderSide       :: Side
         , orderCreatedAt  :: UTCTime
@@ -202,10 +202,36 @@ data Order
     deriving (Show, Generic)
 
 instance ToJSON Order where
-    toJSON = genericToJSON coinbaseAesonOptions
+    toJSON Order{..} = object
+        [ "id"          .= orderId
+        , "size"        .= orderSize
+        , "price"       .= orderPrice
+        , "product_id"  .= orderProductId
+        , "status"      .= orderStatus
+        , "filled_size" .= orderFilledSize
+        , "filled_fees" .= orderFilledFees
+        , "settled"     .= orderSettled
+        , "side"        .= orderSide
+        , "created_at"  .= CoinbaseTime orderCreatedAt
+        , "done_at"     .= liftM CoinbaseTime orderDoneAt
+        , "done_reason" .= orderDoneReason
+        ]
 
 instance FromJSON Order where
-    parseJSON = genericParseJSON coinbaseAesonOptions
+    parseJSON (Object m) = Order
+        <$> m .: "id"
+        <*> m .: "size"
+        <*> m .: "price"
+        <*> m .: "product_id"
+        <*> m .: "status"
+        <*> m .:? "filled_size"
+        <*> m .:? "filled_fees"
+        <*> m .: "settled"
+        <*> m .: "side"
+        <*> liftM unCoinbaseTime (m .: "created_at")
+        <*> liftM (liftM unCoinbaseTime) (m .:? "done_at")
+        <*> m .:? "done_reason"
+    parseJSON _ = mzero
 
 -- Fills
 

@@ -3,7 +3,9 @@
 {-# LANGUAGE OverloadedStrings     #-}
 
 module Coinbase.Exchange.Rest
-    ( coinbaseRequest
+    ( coinbaseGet
+    , coinbasePost
+    , coinbaseDelete
     , voidBody
     ) where
 
@@ -35,13 +37,35 @@ type Signed = Bool
 voidBody :: Maybe ()
 voidBody = Nothing
 
+coinbaseGet :: ( ToJSON a
+               , FromJSON b
+               , MonadResource m
+               , MonadReader ExchangeConf m
+               , MonadError ExchangeFailure m )
+            => Signed -> Path -> Maybe a -> m b
+coinbaseGet sgn p ma = coinbaseRequest "GET" sgn p ma >>= processResponse
+
+coinbasePost :: ( ToJSON a
+                , FromJSON b
+                , MonadResource m
+                , MonadReader ExchangeConf m
+                , MonadError ExchangeFailure m )
+             => Signed -> Path -> Maybe a -> m b
+coinbasePost sgn p ma = coinbaseRequest "POST" sgn p ma >>= processResponse
+
+coinbaseDelete :: ( ToJSON a
+                  , MonadResource m
+                  , MonadReader ExchangeConf m
+                  , MonadError ExchangeFailure m )
+               => Signed -> Path -> Maybe a -> m ()
+coinbaseDelete sgn p ma = coinbaseRequest "DELETE" sgn p ma >>= processEmpty
+
 coinbaseRequest :: ( ToJSON a
-                   , FromJSON b
                    , MonadResource m
                    , MonadReader ExchangeConf m
                    , MonadError ExchangeFailure m )
-                => Signed -> Method -> Path -> Maybe a -> m b
-coinbaseRequest sgn meth p ma = do
+                => Method -> Signed -> Path -> Maybe a -> m (Response (ResumableSource m BS.ByteString))
+coinbaseRequest meth sgn p ma = do
         conf <- ask
         req  <- case apiType conf of
                     Sandbox -> parseUrl $ sandboxRest ++ p
@@ -52,9 +76,8 @@ coinbaseRequest sgn meth p ma = do
                                           ]
                        }
 
-        res <- flip http (manager conf) =<< signMessage sgn meth
-                                        =<< encodeBody ma req'
-        processResponse res
+        flip http (manager conf) =<< signMessage sgn meth
+                                 =<< encodeBody ma req'
 
 encodeBody :: (ToJSON a, Monad m)
            => Maybe a -> Request -> m Request
@@ -92,7 +115,10 @@ signMessage False _ req = return req
 
 --
 
-processResponse :: (FromJSON b, MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+processResponse :: ( FromJSON b
+                   , MonadResource m
+                   , MonadReader ExchangeConf m
+                   , MonadError ExchangeFailure m )
                 => Response (ResumableSource m BS.ByteString) -> m b
 processResponse res =
     case responseStatus res of
@@ -100,5 +126,15 @@ processResponse res =
                                  case body of
                                      Success b -> return b
                                      Error  er -> throwError $ ParseFailure $ T.pack er
+          | otherwise      -> do body <- responseBody res $$+- CB.sinkLbs
+                                 throwError $ ApiFailure $ T.decodeUtf8 $ LBS.toStrict body
+
+processEmpty :: ( MonadResource m
+                , MonadReader ExchangeConf m
+                , MonadError ExchangeFailure m )
+             => Response (ResumableSource m BS.ByteString) -> m ()
+processEmpty res =
+    case responseStatus res of
+        s | s == status200 -> return ()
           | otherwise      -> do body <- responseBody res $$+- CB.sinkLbs
                                  throwError $ ApiFailure $ T.decodeUtf8 $ LBS.toStrict body

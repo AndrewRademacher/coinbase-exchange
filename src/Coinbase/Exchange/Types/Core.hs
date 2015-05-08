@@ -32,39 +32,39 @@ import           System.Locale       (dateTimeFmt, defaultTimeLocale)
 
 
 newtype ProductId = ProductId { unProductId :: Text }
-    deriving (Eq, Ord, Show, Read, IsString, FromJSON, ToJSON)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, IsString, NFData, Hashable, FromJSON, ToJSON)
 
 newtype Price = Price { unPrice :: CoinScientific }
-    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, NFData, Hashable, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 newtype Size = Size { unSize :: CoinScientific }
-    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, NFData, Hashable, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 newtype OrderId = OrderId { unOrderId :: UUID }
-    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 newtype Aggregate = Aggregate { unAggregate :: Int64 }
-    deriving (Eq, Ord, Show, Read, Num, FromJSON, ToJSON)
+    deriving (Eq, Ord, Show, Read, Num, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 --
 
 data Side = Buy | Sell
-    deriving (Eq, Show, Read, Generic)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
 
+instance NFData Side
+instance Hashable Side
 instance ToJSON Side where
-    toJSON = genericToJSON defaultOptions { constructorTagModifier = map toLower }
-
+    toJSON = genericToJSON coinbaseAesonOptions
 instance FromJSON Side where
-    parseJSON = genericParseJSON defaultOptions { constructorTagModifier = map toLower }
+    parseJSON = genericParseJSON coinbaseAesonOptions
 
 --
 
 newtype TradeId = TradeId { unTradeId :: Word64 }
-    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
+    deriving (Eq, Ord, Num, Show, Read, Data, Typeable, Generic, NFData, Hashable)
 
 instance ToJSON TradeId where
     toJSON = String . T.pack . show . unTradeId
-
 instance FromJSON TradeId where
     parseJSON (String t) = pure $ TradeId $ read $ T.unpack t
     parseJSON (Number n) = pure $ TradeId $ floor n
@@ -73,7 +73,7 @@ instance FromJSON TradeId where
 --
 
 newtype CurrencyId = CurrencyId { unCurrencyId :: Text }
-    deriving (Eq, Ord, Show, Read, IsString, FromJSON, ToJSON)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, IsString, NFData, Hashable, FromJSON, ToJSON)
 
 ----
 
@@ -84,25 +84,27 @@ data OrderStatus
     | Pending
     deriving (Eq, Show, Read, Data, Typeable, Generic)
 
+instance NFData OrderStatus
+instance Hashable OrderStatus
 instance ToJSON OrderStatus where
     toJSON = genericToJSON coinbaseAesonOptions
-
 instance FromJSON OrderStatus where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
 --
 
 newtype ClientOrderId = ClientOrderId { unClientOrderId :: UUID }
-    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 --
 
 data Reason = Filled | Canceled
-    deriving (Eq, Show, Read, Generic)
+    deriving (Eq, Show, Read, Data, Typeable, Generic)
 
+instance NFData Reason
+instance Hashable Reason
 instance ToJSON Reason where
     toJSON = genericToJSON defaultOptions { constructorTagModifier = map toLower }
-
 instance FromJSON Reason where
     parseJSON = genericParseJSON defaultOptions { constructorTagModifier = map toLower }
 
@@ -113,7 +115,6 @@ newtype CoinScientific = CoinScientific { unCoinScientific :: Scientific }
 
 instance ToJSON CoinScientific where
     toJSON (CoinScientific v) = String . T.pack . show $ v
-
 instance FromJSON CoinScientific where
     parseJSON = withText "CoinScientific" $ \t ->
         case maybeRead (T.unpack t) of
@@ -131,7 +132,6 @@ newtype CoinbaseTime = CoinbaseTime { unCoinbaseTime :: UTCTime }
 instance ToJSON CoinbaseTime where
     toJSON (CoinbaseTime t) = String $ T.pack $
         formatTime defaultTimeLocale coinbaseTimeFormat t ++ "00"
-
 instance FromJSON CoinbaseTime where
     parseJSON = withText "Coinbase Time" $ \t ->
         case parseTime defaultTimeLocale coinbaseTimeFormat (T.unpack t ++ "00") of

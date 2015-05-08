@@ -1,10 +1,14 @@
+{-# LANGUAGE DeriveDataTypeable         #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
 module Coinbase.Exchange.Types.Socket where
 
+import           Control.DeepSeq
 import           Data.Aeson.Types
+import           Data.Data
+import           Data.Hashable
 import           Data.Text                    (Text)
 import           Data.Time
 import           Data.Word
@@ -13,7 +17,7 @@ import           GHC.Generics
 import           Coinbase.Exchange.Types.Core
 
 newtype Sequence = Sequence { unSequence :: Word64 }
-    deriving (Eq, Ord, Num, Show, Read, Generic, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 data ExchangeMessage
     = Subscribe
@@ -71,10 +75,10 @@ data ExchangeMessage
     | Error
         { msgMessage :: Text
         }
-    deriving (Eq, Show, Read, Generic)
+    deriving (Eq, Show, Read, Data, Typeable, Generic)
 
+instance NFData ExchangeMessage
 instance ToJSON ExchangeMessage where
     toJSON = genericToJSON coinbaseAesonOptions
-
 instance FromJSON ExchangeMessage where
     parseJSON = genericParseJSON coinbaseAesonOptions

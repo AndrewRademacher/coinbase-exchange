@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable         #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -8,9 +9,12 @@
 module Coinbase.Exchange.Types.MarketData where
 
 import           Control.Applicative
+import           Control.DeepSeq
 import           Control.Monad.Except
 import           Data.Aeson.Casing
 import           Data.Aeson.Types
+import           Data.Data
+import           Data.Hashable
 import           Data.Int
 import           Data.Scientific
 import           Data.String
@@ -36,8 +40,11 @@ data Product
         , prodQuoteIncrement :: Scientific
         , prodDisplayName    :: Text
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Product
+instance ToJSON Product where
+    toJSON = genericToJSON coinbaseAesonOptions
 instance FromJSON Product where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
@@ -49,26 +56,29 @@ data Book a
         , bookBids     :: [Bid a]
         , bookAsks     :: [Ask a]
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance (NFData a) => NFData (Book a)
+instance (ToJSON a) => ToJSON (Book a) where
+    toJSON = genericToJSON coinbaseAesonOptions
 instance (FromJSON a) => FromJSON (Book a) where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
 data Ask a = Ask Price Size a
-    deriving (Eq, Ord, Show, Read, Generic)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
 
+instance (NFData a) => NFData (Ask a)
 instance (ToJSON a) => ToJSON (Ask a) where
     toJSON = genericToJSON defaultOptions
-
 instance (FromJSON a) => FromJSON (Ask a) where
     parseJSON = genericParseJSON defaultOptions
 
 data Bid a = Bid Price Size a
-    deriving (Eq, Ord, Show, Read, Generic)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
 
+instance (NFData a) => NFData (Bid a)
 instance (ToJSON a) => ToJSON (Bid a) where
     toJSON = genericToJSON defaultOptions
-
 instance (FromJSON a) => FromJSON (Bid a) where
     parseJSON = genericParseJSON defaultOptions
 
@@ -81,11 +91,11 @@ data Tick
         , tickSize    :: Size
         , tickTime    :: Maybe UTCTime
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Tick
 instance ToJSON Tick where
     toJSON = genericToJSON coinbaseAesonOptions
-
 instance FromJSON Tick where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
@@ -99,8 +109,9 @@ data Trade
         , tradeSize    :: Size
         , tradeSide    :: Side
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Trade
 instance ToJSON Trade where
     toJSON Trade{..} = object [ "time"      .= CoinbaseTime tradeTime
                               , "trade_id"  .= tradeTradeId
@@ -108,7 +119,6 @@ instance ToJSON Trade where
                               , "size"      .= tradeSize
                               , "side"      .= tradeSide
                               ]
-
 instance FromJSON Trade where
     parseJSON (Object m) = Trade <$> liftM unCoinbaseTime (m .: "time")
                                  <*> m .: "trade_id"
@@ -120,8 +130,9 @@ instance FromJSON Trade where
 -- Historic Rates (Candles)
 
 data Candle = Candle UTCTime Low High Open Close Volume
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Candle
 instance FromJSON Candle where
     parseJSON (Array v)
         = case V.length v of
@@ -135,19 +146,19 @@ instance FromJSON Candle where
     parseJSON _ = mzero
 
 newtype Low = Low { unLow :: Double }
-    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 newtype High = High { unHigh :: Double }
-    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 newtype Open = Open { unOpen :: Double }
-    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 newtype Close = Close { unClose :: Double }
-    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 newtype Volume = Volume { unVolume :: Double }
-    deriving (Eq, Ord, Show, Read, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 -- Product Stats
 
@@ -158,8 +169,9 @@ data Stats
         , statsLow    :: Low
         , statsVolume :: Volume
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Stats
 instance ToJSON Stats where
     toJSON Stats{..} = object
         [ "open"    .= show statsOpen
@@ -167,7 +179,6 @@ instance ToJSON Stats where
         , "low"     .= show statsLow
         , "volume"  .= show statsVolume
         ]
-
 instance FromJSON Stats where
     parseJSON (Object m)
         = Stats <$> liftM (Open . read) (m .: "open")
@@ -184,11 +195,11 @@ data Currency
         , curName    :: Text
         , curMinSize :: CoinScientific
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Currency
 instance ToJSON Currency where
     toJSON = genericToJSON coinbaseAesonOptions
-
 instance FromJSON Currency where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
@@ -199,7 +210,9 @@ data ExchangeTime
         { timeIso   :: UTCTime
         , timeEpoch :: Double
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance ToJSON ExchangeTime where
+    toJSON = genericToJSON coinbaseAesonOptions
 instance FromJSON ExchangeTime where
     parseJSON = genericParseJSON coinbaseAesonOptions

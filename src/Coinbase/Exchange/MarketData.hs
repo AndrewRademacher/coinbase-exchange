@@ -5,7 +5,22 @@
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
-module Coinbase.Exchange.MarketData where
+module Coinbase.Exchange.MarketData
+    ( getProducts
+    , getTopOfBook
+    , getTop50OfBook
+    , getOrderBook
+
+    , getProductTicker
+    , getTrades
+    , getHistory
+    , getStats
+
+    , getCurrencies
+    , getExchangeTime
+
+    , module Coinbase.Exchange.Types.MarketData
+    ) where
 
 import           Control.Monad.Except
 import           Control.Monad.Reader

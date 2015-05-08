@@ -69,11 +69,6 @@ instance FromJSON TradeId where
     parseJSON (String t) = pure $ TradeId $ read $ T.unpack t
     parseJSON (Number n) = pure $ TradeId $ floor n
     parseJSON _ = mzero
--- instance FromJSON TradeId where
---     parseJSON = withText "TradeId" $ \t ->
---         case maybeRead (T.unpack t) of
---             Just  v -> pure $ TradeId v
---             Nothing -> fail "Could not parse TradeId."
 
 --
 

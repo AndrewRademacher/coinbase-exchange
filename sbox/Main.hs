@@ -2,13 +2,16 @@
 
 module Main where
 
+import           Control.Concurrent
 import           Control.Monad
+import           Data.Aeson
 import qualified Data.ByteString.Char8           as CBS
 import           Data.Maybe
 import           Data.Time
 import           Data.UUID
 import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
+import qualified Network.WebSockets              as WS
 import           System.Environment
 import           System.Locale
 
@@ -51,3 +54,15 @@ withCoinbase act = do
                                 Right s -> return s
                                 Left  f -> error $ show f
             Left   er -> error $ show er
+
+printSocket :: IO ()
+printSocket = subscribe Live btc $ \conn -> do
+        putStrLn "Connected."
+        _ <- forkIO $ forever $ do
+            ds <- WS.receiveData conn
+            let res = eitherDecode ds
+            case res :: Either String ExchangeMessage of
+                Left er -> print er
+                Right v -> print v
+        _ <- forever $ threadDelay (1000000 * 60)
+        return ()

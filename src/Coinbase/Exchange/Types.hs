@@ -64,13 +64,13 @@ sandboxRest :: Endpoint
 sandboxRest = "https://api-public.sandbox.exchange.coinbase.com"
 
 sandboxSocket :: Endpoint
-sandboxSocket = "wss://ws-feed-public.sandbox.exchange.coinbase.com"
+sandboxSocket = "ws-feed-public.sandbox.exchange.coinbase.com"
 
 liveRest :: Endpoint
 liveRest = "https://api.exchange.coinbase.com"
 
 liveSocket :: Endpoint
-liveSocket = "wss://ws-feed.exchange.coinbase.com"
+liveSocket = "ws-feed.exchange.coinbase.com"
 
 -- Monad Stack
 

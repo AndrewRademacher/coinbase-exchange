@@ -37,6 +37,7 @@ tests conf = testGroup "Private"
         , case_parse conf "getOrderList" $ getOrderList [Open, Pending]
         , case_parse conf "getOrder" $ liftIO (readIORef cancelOrderId) >>= getOrder . fromJust
         , case_cancelOrder conf
+        , case_parse conf "getFills" $ getFills Nothing Nothing
         ]
 
 case_parse :: ExchangeConf -> String -> Exchange a -> TestTree

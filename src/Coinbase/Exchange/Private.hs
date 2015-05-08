@@ -61,9 +61,9 @@ getFills :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFai
          => Maybe OrderId -> Maybe ProductId -> m [Fill]
 getFills moid mpid = coinbaseGet True ("/fills?" ++ oid ++ "&" ++ pid) voidBody
     where oid = case moid of Just  v -> "order_id=" ++ toString (unOrderId v)
-                             Nothing -> "order_id=all"
+                             Nothing -> ""
           pid = case mpid of Just  v -> "product_id=" ++ T.unpack (unProductId v)
-                             Nothing -> "product_id=all"
+                             Nothing -> ""
 
 -- Transfers
 

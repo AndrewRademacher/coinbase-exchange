@@ -265,10 +265,32 @@ data Fill
     deriving (Show, Generic)
 
 instance ToJSON Fill where
-    toJSON = genericToJSON coinbaseAesonOptions
+    toJSON Fill{..} = object
+        [ "trade_id"    .= fillTradeId
+        , "product_id"  .= fillProductId
+        , "price"       .= fillPrice
+        , "size"        .= fillSize
+        , "order_id"    .= fillOrderId
+        , "created_at"  .= CoinbaseTime fillCreatedAt
+        , "liquidity"   .= fillLiquidity
+        , "fee"         .= fillFee
+        , "settled"     .= fillSettled
+        , "side"        .= fillSide
+        ]
 
 instance FromJSON Fill where
-    parseJSON = genericParseJSON coinbaseAesonOptions
+    parseJSON (Object m) = Fill
+        <$> m .: "trade_id"
+        <*> m .: "product_id"
+        <*> m .: "price"
+        <*> m .: "size"
+        <*> m .: "order_id"
+        <*> liftM unCoinbaseTime (m .: "created_at")
+        <*> m .: "liquidity"
+        <*> m .: "fee"
+        <*> m .: "settled"
+        <*> m .: "side"
+    parseJSON _ = mzero
 
 -- Transfers
 

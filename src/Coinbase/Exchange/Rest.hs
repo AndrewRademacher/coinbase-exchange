@@ -76,7 +76,7 @@ coinbaseRequest meth sgn p ma = do
                                           ]
                        }
 
-        flip http (manager conf) =<< signMessage sgn meth
+        flip http (manager conf) =<< signMessage sgn meth p
                                  =<< encodeBody ma req'
 
 encodeBody :: (ToJSON a, Monad m)
@@ -89,14 +89,14 @@ encodeBody (Just a) req = return req
 encodeBody Nothing  req = return req
 
 signMessage :: (MonadIO m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-            => Signed -> Method -> Request -> m Request
-signMessage True meth req = do
+            => Signed -> Method -> Path -> Request -> m Request
+signMessage True meth p req = do
         conf <- ask
         case authToken conf of
             Just tok -> do time <- liftM (realToFrac . utcTimeToPOSIXSeconds) (liftIO getCurrentTime)
                                     >>= \t -> return . CBS.pack $ printf "%.0f" (t::Double)
                            rBody <- pullBody $ requestBody req
-                           let presign = CBS.concat [time, meth, path req, rBody]
+                           let presign = CBS.concat [time, meth, CBS.pack p, rBody]
                                sign    = toBytes (hmac (secret tok) presign :: HMAC SHA256)
                            return req
                                 { requestBody    = RequestBodyBS rBody
@@ -107,11 +107,11 @@ signMessage True meth req = do
                                        , ("cb-access-passphrase", passphrase tok)
                                        ]
                                 }
-            Nothing  -> throwError $ AuthenticationRequiredFailure $ T.decodeUtf8 $ path req
+            Nothing  -> throwError $ AuthenticationRequiredFailure $ T.pack p
     where pullBody (RequestBodyBS  b) = return b
           pullBody (RequestBodyLBS b) = return $ LBS.toStrict b
           pullBody _                  = throwError AuthenticationRequiresByteStrings
-signMessage False _ req = return req
+signMessage False _ _ req = return req
 
 --
 

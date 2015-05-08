@@ -7,6 +7,7 @@ module Coinbase.Exchange.Types.Core where
 
 import           Control.Applicative
 import           Control.DeepSeq
+import           Control.Monad
 import           Data.Aeson.Casing
 import           Data.Aeson.Types
 import           Data.Char
@@ -59,7 +60,20 @@ instance FromJSON Side where
 --
 
 newtype TradeId = TradeId { unTradeId :: Word64 }
-    deriving (Eq, Ord, Show, Read, Num, FromJSON, ToJSON)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
+
+instance ToJSON TradeId where
+    toJSON = String . T.pack . show . unTradeId
+
+instance FromJSON TradeId where
+    parseJSON (String t) = pure $ TradeId $ read $ T.unpack t
+    parseJSON (Number n) = pure $ TradeId $ floor n
+    parseJSON _ = mzero
+-- instance FromJSON TradeId where
+--     parseJSON = withText "TradeId" $ \t ->
+--         case maybeRead (T.unpack t) of
+--             Just  v -> pure $ TradeId v
+--             Nothing -> fail "Could not parse TradeId."
 
 --
 

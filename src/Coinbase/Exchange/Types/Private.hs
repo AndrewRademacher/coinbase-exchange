@@ -13,6 +13,7 @@ import           Data.Aeson.Types
 import           Data.Char
 import           Data.Data
 import           Data.Text                    (Text)
+import qualified Data.Text                    as T
 import           Data.Time
 import           Data.UUID
 import           Data.Word
@@ -45,7 +46,7 @@ instance FromJSON Account where
 --
 
 newtype EntryId = EntryId { unEntryId :: Word64 }
-    deriving (Eq, Show, Num, Read, Data, Typeable, Generic, FromJSON, ToJSON)
+    deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
 
 data Entry
     = Entry

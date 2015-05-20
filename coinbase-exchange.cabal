@@ -1,5 +1,10 @@
 name:                coinbase-exchange
 version:             0.1.0.0
+synopsis:            Connector library for the coinbase exchange.
+description:         Access library for the coinbase exchange. Allows the use
+                     of both the public market data API as well as the private
+                     account data API. Additionally provides types to connect
+                     to the streaming API via a websocket.
 license:             MIT
 license-file:        LICENSE
 author:              Andrew Rademacher

@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Coinbase.Exchange.Socket where
+module Coinbase.Exchange.Socket
+    ( subscribe
+    , module Coinbase.Exchange.Types.Socket
+    ) where
 
 import           Data.Aeson
 import           Network.Socket

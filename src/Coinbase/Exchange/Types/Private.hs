@@ -7,11 +7,13 @@
 module Coinbase.Exchange.Types.Private where
 
 import           Control.Applicative
+import           Control.DeepSeq
 import           Control.Monad
 import           Data.Aeson.Casing
 import           Data.Aeson.Types
 import           Data.Char
 import           Data.Data
+import           Data.Hashable
 import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import           Data.Time
@@ -25,7 +27,7 @@ import           Coinbase.Exchange.Types.Core
 -- Accounts
 
 newtype AccountId = AccountId { unAccountId :: UUID }
-    deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 data Account
     = Account
@@ -35,18 +37,18 @@ data Account
         , accAvailable :: CoinScientific
         , accCurrency  :: CurrencyId
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Account
 instance ToJSON Account where
     toJSON = genericToJSON coinbaseAesonOptions
-
 instance FromJSON Account where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
 --
 
 newtype EntryId = EntryId { unEntryId :: Word64 }
-    deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 data Entry
     = Entry
@@ -57,8 +59,9 @@ data Entry
         , entryType      :: EntryType
         , entryDetails   :: EntryDetails
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Entry
 instance ToJSON Entry where
     toJSON Entry{..} = object [ "id"         .= entryId
                               , "created_at" .= CoinbaseTime entryCreatedAt
@@ -67,7 +70,6 @@ instance ToJSON Entry where
                               , "type"       .= entryType
                               , "details"    .= entryDetails
                               ]
-
 instance FromJSON Entry where
     parseJSON (Object m) = Entry
         <$> m .: "id"
@@ -82,11 +84,12 @@ data EntryType
     = Match
     | Fee
     | Transfer
-    deriving (Eq, Show, Read, Data, Typeable, Generic)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
 
+instance NFData EntryType
+instance Hashable EntryType
 instance ToJSON EntryType where
     toJSON = genericToJSON defaultOptions { constructorTagModifier = map toLower }
-
 instance FromJSON EntryType where
     parseJSON = genericParseJSON defaultOptions { constructorTagModifier = map toLower }
 
@@ -96,18 +99,18 @@ data EntryDetails
         , detailTradeId   :: Maybe TradeId
         , detailProductId :: Maybe ProductId
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData EntryDetails
 instance ToJSON EntryDetails where
     toJSON = genericToJSON coinbaseAesonOptions
-
 instance FromJSON EntryDetails where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
 --
 
 newtype HoldId = HoldId { unHoldId :: UUID }
-    deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 data Hold
     = OrderHold
@@ -126,11 +129,11 @@ data Hold
         , holdAmount      :: CoinScientific
         , holdTransferRef :: TransferId
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Hold
 instance ToJSON Hold where
     toJSON = genericToJSON coinbaseAesonOptions
-
 instance FromJSON Hold where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
@@ -141,14 +144,15 @@ data SelfTrade
     | CancelOldest
     | CancelNewest
     | CancelBoth
-    deriving (Eq, Show, Read, Data, Typeable, Generic)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
 
+instance NFData SelfTrade
+instance Hashable SelfTrade
 instance ToJSON SelfTrade where
     toJSON DecrementAndCancel = String "dc"
     toJSON CancelOldest       = String "co"
     toJSON CancelNewest       = String "cn"
     toJSON CancelBoth         = String "cb"
-
 instance FromJSON SelfTrade where
     parseJSON (String "dc") = return DecrementAndCancel
     parseJSON (String "co") = return CancelOldest
@@ -165,11 +169,11 @@ data NewOrder
         , noClientOid :: Maybe ClientOrderId
         , noSelfTrade :: Maybe SelfTrade
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData NewOrder
 instance ToJSON NewOrder where
     toJSON = genericToJSON coinbaseAesonOptions
-
 instance FromJSON NewOrder where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
@@ -177,11 +181,11 @@ data OrderConfirmation
     = OrderConfirmation
         { ocId :: OrderId
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData OrderConfirmation
 instance ToJSON OrderConfirmation where
     toJSON = genericToJSON coinbaseAesonOptions
-
 instance FromJSON OrderConfirmation where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
@@ -200,8 +204,9 @@ data Order
         , orderDoneAt     :: Maybe UTCTime
         , orderDoneReason :: Maybe Reason
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Order
 instance ToJSON Order where
     toJSON Order{..} = object
         [ "id"          .= orderId
@@ -217,7 +222,6 @@ instance ToJSON Order where
         , "done_at"     .= liftM CoinbaseTime orderDoneAt
         , "done_reason" .= orderDoneReason
         ]
-
 instance FromJSON Order where
     parseJSON (Object m) = Order
         <$> m .: "id"
@@ -239,12 +243,13 @@ instance FromJSON Order where
 data Liquidity
     = Maker
     | Taker
-    deriving (Eq, Show, Read, Data, Typeable, Generic)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
 
+instance NFData Liquidity
+instance Hashable Liquidity
 instance ToJSON Liquidity where
     toJSON Maker = String "M"
     toJSON Taker = String "T"
-
 instance FromJSON Liquidity where
     parseJSON (String "M") = return Maker
     parseJSON (String "T") = return Taker
@@ -263,8 +268,9 @@ data Fill
         , fillSettled   :: Bool
         , fillSide      :: Side
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Fill
 instance ToJSON Fill where
     toJSON Fill{..} = object
         [ "trade_id"    .= fillTradeId
@@ -278,7 +284,6 @@ instance ToJSON Fill where
         , "settled"     .= fillSettled
         , "side"        .= fillSide
         ]
-
 instance FromJSON Fill where
     parseJSON (Object m) = Fill
         <$> m .: "trade_id"
@@ -296,10 +301,10 @@ instance FromJSON Fill where
 -- Transfers
 
 newtype TransferId = TransferId { unTransferId :: UUID }
-    deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, FromJSON, ToJSON)
 
 newtype CoinbaseAccountId = CoinbaseAccountId { unCoinbaseAccountId :: UUID }
-    deriving (Eq, Show, Read, Data, Typeable, Generic, FromJSON, ToJSON)
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, FromJSON, ToJSON)
 
 data Transfer
     = Deposit
@@ -310,10 +315,10 @@ data Transfer
         { transAmount          :: Size
         , transCoinbaseAccount :: CoinbaseAccountId
         }
-    deriving (Show, Generic)
+    deriving (Show, Data, Typeable, Generic)
 
+instance NFData Transfer
 instance ToJSON Transfer where
     toJSON = genericToJSON coinbaseAesonOptions
-
 instance FromJSON Transfer where
     parseJSON = genericParseJSON coinbaseAesonOptions

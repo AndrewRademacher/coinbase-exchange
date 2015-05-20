@@ -2,7 +2,23 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
-module Coinbase.Exchange.Private where
+module Coinbase.Exchange.Private
+    ( getAccountList
+    , getAccount
+    , getAccountLedger
+    , getAccountHolds
+
+    , createOrder
+    , cancelOrder
+    , getOrderList
+    , getOrder
+
+    , getFills
+
+    , createTransfer
+
+    , module Coinbase.Exchange.Types.Private
+    ) where
 
 import           Control.Monad.Except
 import           Control.Monad.Reader

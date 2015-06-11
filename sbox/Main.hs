@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
@@ -13,7 +14,6 @@ import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
 import qualified Network.WebSockets              as WS
 import           System.Environment
-import           System.Locale
 
 import           Coinbase.Exchange.MarketData
 import           Coinbase.Exchange.Private
@@ -33,10 +33,10 @@ btc :: ProductId
 btc = "BTC-USD"
 
 start :: Maybe UTCTime
-start = Just $ readTime defaultTimeLocale "%FT%X%z" "2015-04-12T20:22:37+0000"
+start = Just $ parseTimeOrError True defaultTimeLocale "%FT%X%z" "2015-04-12T20:22:37+0000"
 
 end :: Maybe UTCTime
-end = Just $ readTime defaultTimeLocale "%FT%X%z" "2015-04-23T20:22:37+0000"
+end = Just $ parseTimeOrError True defaultTimeLocale "%FT%X%z" "2015-04-23T20:22:37+0000"
 
 accountId :: AccountId
 accountId = AccountId $ fromJust $ fromString "52072cbb-4e76-496f-a479-166cb4d177fa"

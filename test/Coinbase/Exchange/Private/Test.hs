@@ -11,7 +11,6 @@ import           Data.Maybe
 import           Data.Time
 import           Data.UUID.V4
 import           System.IO.Unsafe
-import           System.Locale
 import           Test.Tasty
 import           Test.Tasty.HUnit
 

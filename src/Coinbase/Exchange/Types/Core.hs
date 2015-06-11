@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DeriveDataTypeable         #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -24,11 +23,6 @@ import           Data.UUID
 import           Data.UUID.Aeson     ()
 import           Data.Word
 import           GHC.Generics
-#if MIN_VERSION_time(1,5,0)
-import           Data.Time.Format    (dateTimeFmt, defaultTimeLocale)
-#else
-import           System.Locale       (dateTimeFmt, defaultTimeLocale)
-#endif
 
 
 newtype ProductId = ProductId { unProductId :: Text }
@@ -134,7 +128,7 @@ instance ToJSON CoinbaseTime where
         formatTime defaultTimeLocale coinbaseTimeFormat t ++ "00"
 instance FromJSON CoinbaseTime where
     parseJSON = withText "Coinbase Time" $ \t ->
-        case parseTime defaultTimeLocale coinbaseTimeFormat (T.unpack t ++ "00") of
+        case parseTimeM True defaultTimeLocale coinbaseTimeFormat (T.unpack t ++ "00") of
             Just d -> pure $ CoinbaseTime d
             _      -> fail "could not parse coinbase time format."
 

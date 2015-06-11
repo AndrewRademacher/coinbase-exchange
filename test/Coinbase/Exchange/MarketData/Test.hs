@@ -6,7 +6,6 @@ module Coinbase.Exchange.MarketData.Test
 
 import           Control.Monad.IO.Class
 import           Data.Time
-import           System.Locale
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
@@ -35,10 +34,10 @@ defProduct :: ProductId
 defProduct = ProductId "BTC-USD"
 
 defStart :: Maybe UTCTime
-defStart = Just $ readTime defaultTimeLocale "%FT%X%z" "2015-04-12T20:22:37+0000"
+defStart = Just $ parseTimeOrError True defaultTimeLocale "%FT%X%z" "2015-04-12T20:22:37+0000"
 
 defEnd :: Maybe UTCTime
-defEnd = Just $ readTime defaultTimeLocale "%FT%X%z" "2015-04-23T20:22:37+0000"
+defEnd = Just $ parseTimeOrError True defaultTimeLocale "%FT%X%z" "2015-04-23T20:22:37+0000"
 
 case_parse :: ExchangeConf -> String -> Exchange a -> TestTree
 case_parse conf l fn = testCase l $ do

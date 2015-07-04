@@ -52,7 +52,7 @@ instance FromJSON Product where
 
 data Book a
     = Book
-        { bookSequence :: Word64
+        { bookSequence :: Sequence
         , bookBids     :: [Bid a]
         , bookAsks     :: [Ask a]
         }

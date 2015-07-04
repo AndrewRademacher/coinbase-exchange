@@ -40,6 +40,9 @@ newtype OrderId = OrderId { unOrderId :: UUID }
 newtype Aggregate = Aggregate { unAggregate :: Int64 }
     deriving (Eq, Ord, Show, Read, Num, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
+newtype Sequence = Sequence { unSequence :: Word64 }
+    deriving (Eq, Ord, Num, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
+
 --
 
 data Side = Buy | Sell

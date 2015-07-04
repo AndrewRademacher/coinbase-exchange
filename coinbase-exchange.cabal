@@ -53,6 +53,7 @@ library
                     ,   wuss
                     ,   cryptohash
                     ,   byteable
+                    ,   exceptions
 
                     ,   old-locale
 

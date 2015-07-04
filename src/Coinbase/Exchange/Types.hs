@@ -1,4 +1,6 @@
+{-# LANGUAGE DeriveDataTypeable         #-}
 {-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
@@ -39,12 +41,15 @@ module Coinbase.Exchange.Types
 
 import           Control.Applicative
 import           Control.Monad.Base
+import           Control.Monad.Catch
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.Trans.Resource
 import           Data.ByteString
 import qualified Data.ByteString.Base64       as Base64
+import           Data.Data
 import           Data.Text                    (Text)
+import           GHC.Generics
 import           Network.HTTP.Conduit
 
 -- API URLs
@@ -101,7 +106,9 @@ data ExchangeFailure = ParseFailure Text
                      | ApiFailure Text
                      | AuthenticationRequiredFailure Text
                      | AuthenticationRequiresByteStrings
-                     deriving (Show)
+                     deriving (Show, Data, Typeable, Generic)
+
+instance Exception ExchangeFailure
 
 type Exchange a = ExchangeT IO a
 
@@ -119,6 +126,16 @@ runExchange = runExchangeT
 
 runExchangeT :: MonadBaseControl IO m => ExchangeConf -> ExchangeT m a -> m (Either ExchangeFailure a)
 runExchangeT conf = runExceptT . flip runReaderT conf . runResourceT . unExchangeT
+
+execExchange :: ExchangeConf -> Exchange a -> IO a
+execExchange = execExchangeT
+
+execExchangeT :: (MonadThrow m, MonadBaseControl IO m) => ExchangeConf -> ExchangeT m a -> m a
+execExchangeT conf act = do
+    v <- runExceptT . flip runReaderT conf . runResourceT . unExchangeT $ act
+    case v of
+        Left er -> throwM er
+        Right v -> return v
 
 -- Utils
 

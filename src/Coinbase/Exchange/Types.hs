@@ -35,6 +35,8 @@ module Coinbase.Exchange.Types
     , ExceptT
     , runExchange
     , runExchangeT
+    , execExchange
+    , execExchangeT
 
     , getManager
     ) where

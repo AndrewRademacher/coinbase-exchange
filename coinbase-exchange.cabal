@@ -1,5 +1,5 @@
 name:                coinbase-exchange
-version:             0.2.0.1
+version:             0.2.0.2
 synopsis:            Connector library for the coinbase exchange.
 description:         Access library for the coinbase exchange. Allows the use
                      of both the public market data API as well as the private

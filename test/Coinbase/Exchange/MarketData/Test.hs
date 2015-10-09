@@ -37,12 +37,12 @@ defStart :: Maybe UTCTime
 defStart = Just $ parseTimeOrError True defaultTimeLocale "%FT%X%z" "2015-04-12T20:22:37+0000"
 
 defEnd :: Maybe UTCTime
-defEnd = Just $ parseTimeOrError True defaultTimeLocale "%FT%X%z" "2015-04-23T20:22:37+0000"
+defEnd = Just $ parseTimeOrError True defaultTimeLocale "%FT%X%z" "2015-04-23T21:22:37+0000"
 
-case_parse :: ExchangeConf -> String -> Exchange a -> TestTree
+case_parse :: Show a => ExchangeConf -> String -> Exchange a -> TestTree
 case_parse conf l fn = testCase l $ do
         v <- liftIO $ runExchange conf fn
-        assertBool "Failed to parse."
+        assertBool ("Failed to parse: " ++ show v)
             (case v of
                 Left  _ -> False
                 Right _ -> True)

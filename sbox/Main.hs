@@ -26,9 +26,6 @@ import           Coinbase.Exchange.Types.Socket
 main :: IO ()
 main = printSocket -- putStrLn "Use GHCi."
 
-testCoinbaseTime :: String
-testCoinbaseTime = "2015-05-06 21:58:22.84227+0000"
-
 btc :: ProductId
 btc = "BTC-USD"
 

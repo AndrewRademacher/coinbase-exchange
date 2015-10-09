@@ -123,23 +123,6 @@ maybeRead = fmap fst . listToMaybe . reads
 
 ----
 
-newtype CoinbaseTime = CoinbaseTime { unCoinbaseTime :: UTCTime }
-    deriving (Eq, Ord, Show, Read, Data, Typeable, NFData)
-
-instance ToJSON CoinbaseTime where
-    toJSON (CoinbaseTime t) = String $ T.pack $
-        formatTime defaultTimeLocale coinbaseTimeFormat t ++ "00"
-instance FromJSON CoinbaseTime where
-    parseJSON = withText "Coinbase Time" $ \t ->
-        case parseTimeM True defaultTimeLocale coinbaseTimeFormat (T.unpack t ++ "00") of
-            Just d -> pure $ CoinbaseTime d
-            _      -> fail "could not parse coinbase time format."
-
-coinbaseTimeFormat :: String
-coinbaseTimeFormat = "%F %T%Q%z"
-
-----
-
 coinbaseAesonOptions :: Options
 coinbaseAesonOptions = (aesonPrefix snakeCase)
     { constructorTagModifier = map toLower

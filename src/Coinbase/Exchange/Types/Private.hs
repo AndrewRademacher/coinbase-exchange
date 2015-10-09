@@ -64,7 +64,7 @@ data Entry
 instance NFData Entry
 instance ToJSON Entry where
     toJSON Entry{..} = object [ "id"         .= entryId
-                              , "created_at" .= CoinbaseTime entryCreatedAt
+                              , "created_at" .= entryCreatedAt
                               , "amount"     .= entryAmount
                               , "balance"    .= entryBalance
                               , "type"       .= entryType
@@ -73,7 +73,7 @@ instance ToJSON Entry where
 instance FromJSON Entry where
     parseJSON (Object m) = Entry
         <$> m .: "id"
-        <*> liftM unCoinbaseTime (m .: "created_at")
+        <*> m .: "created_at"
         <*> m .: "amount"
         <*> m .: "balance"
         <*> m .: "type"
@@ -218,8 +218,8 @@ instance ToJSON Order where
         , "filled_fees" .= orderFilledFees
         , "settled"     .= orderSettled
         , "side"        .= orderSide
-        , "created_at"  .= CoinbaseTime orderCreatedAt
-        , "done_at"     .= liftM CoinbaseTime orderDoneAt
+        , "created_at"  .= orderCreatedAt
+        , "done_at"     .= orderDoneAt
         , "done_reason" .= orderDoneReason
         ]
 instance FromJSON Order where
@@ -233,8 +233,8 @@ instance FromJSON Order where
         <*> m .:? "filled_fees"
         <*> m .: "settled"
         <*> m .: "side"
-        <*> liftM unCoinbaseTime (m .: "created_at")
-        <*> liftM (liftM unCoinbaseTime) (m .:? "done_at")
+        <*> m .: "created_at"
+        <*> m .:? "done_at"
         <*> m .:? "done_reason"
     parseJSON _ = mzero
 
@@ -278,7 +278,7 @@ instance ToJSON Fill where
         , "price"       .= fillPrice
         , "size"        .= fillSize
         , "order_id"    .= fillOrderId
-        , "created_at"  .= CoinbaseTime fillCreatedAt
+        , "created_at"  .= fillCreatedAt
         , "liquidity"   .= fillLiquidity
         , "fee"         .= fillFee
         , "settled"     .= fillSettled
@@ -291,7 +291,7 @@ instance FromJSON Fill where
         <*> m .: "price"
         <*> m .: "size"
         <*> m .: "order_id"
-        <*> liftM unCoinbaseTime (m .: "created_at")
+        <*> m .: "created_at"
         <*> m .: "liquidity"
         <*> m .: "fee"
         <*> m .: "settled"

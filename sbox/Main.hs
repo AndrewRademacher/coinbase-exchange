@@ -35,9 +35,6 @@ start = Just $ parseTimeOrError True defaultTimeLocale "%FT%X%z" "2015-04-12T20:
 end :: Maybe UTCTime
 end = Just $ parseTimeOrError True defaultTimeLocale "%FT%X%z" "2015-04-23T20:22:37+0000"
 
-accountId :: AccountId
-accountId = AccountId $ fromJust $ fromString "52072cbb-4e76-496f-a479-166cb4d177fa"
-
 withCoinbase :: Exchange a -> IO a
 withCoinbase act = do
         mgr     <- newManager tlsManagerSettings
@@ -53,7 +50,7 @@ withCoinbase act = do
             Left   er -> error $ show er
 
 printSocket :: IO ()
-printSocket = subscribe Live btc $ \conn -> do
+printSocket = subscribe Sandbox btc $ \conn -> do
         putStrLn "Connected."
         _ <- forkIO $ forever $ do
             ds <- WS.receiveData conn

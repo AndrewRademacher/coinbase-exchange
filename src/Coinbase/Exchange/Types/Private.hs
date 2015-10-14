@@ -37,7 +37,7 @@ data Account
         , accAvailable :: CoinScientific
         , accCurrency  :: CurrencyId
         }
-    deriving (Show, Data, Typeable, Generic)
+    deriving (Show, Eq, Data, Typeable, Generic)
 
 instance NFData Account
 instance ToJSON Account where

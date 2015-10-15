@@ -103,5 +103,7 @@ test-suite test-coinbase
                     ,   http-client-tls
                     ,   http-conduit
                     ,   transformers
+                    ,   random
+                    ,   scientific
 
                     ,   coinbase-exchange

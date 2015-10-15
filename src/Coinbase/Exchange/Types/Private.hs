@@ -226,7 +226,7 @@ instance FromJSON Order where
     parseJSON (Object m) = Order
         <$> m .: "id"
         <*> m .: "size"
-        <*> m .: "price"
+        <*> {- m .: "price" -} m .:? "price" .!= 0   -- FIX ME!! This is a hack to allows Market Orders for the time being, so I can run the tests.
         <*> m .: "product_id"
         <*> m .: "status"
         <*> m .:? "filled_size"

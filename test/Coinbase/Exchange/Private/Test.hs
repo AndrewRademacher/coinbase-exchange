@@ -15,7 +15,6 @@ import           Data.Scientific
 import           Data.UUID.V4
 
 import           System.Random
-import           Control.Concurrent
 
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -27,53 +26,60 @@ import           Coinbase.Exchange.Types.Private
 
 deriving instance Eq Order
 
+-- NOTE: [Fills in Sandbox]
+--
+-- Orders don't seem to execute in the sandboxed environment provided by coinbase.
+-- This means that we never get any fills. So, we can't test that API in the sandbox.
+--
+
+
 tests :: ExchangeConf -> TestTree
 tests conf = testGroup "Private"
-        [ testCase "getAccountList"     (do as <- case_getAccountList conf
+        [ testCase "getAccountList"     (do as <- run_getAccountList conf
                                             case as of
                                                 [] -> error "Received empty list of accounts"
                                                 _  -> return ()
                                         )
 
-        , testCase "getUSDAccount"      (do as <- case_getAccountList conf
+        , testCase "getUSDAccount"      (do as <- run_getAccountList conf
                                             let usdAccount = findUSDAccount as
-                                            ac <- case_getAccount conf (accId usdAccount)
+                                            ac <- run_getAccount conf (accId usdAccount)
                                             assertEqual "accounts match" usdAccount ac
                                         )
 
-        ,testCase "getUSDAccountLedger" (do as <- case_getAccountList conf
+        ,testCase "getUSDAccountLedger" (do as <- run_getAccountList conf
                                             let usdAccount = findUSDAccount as
-                                            es <- case_getAccountLedger conf (accId usdAccount)
+                                            es <- run_getAccountLedger conf (accId usdAccount)
                                             case es of
                                                 [] -> assertFailure "Received empty list of ledger entries" -- must not be empty to test parser
                                                 _  -> return ()
                                         )
 
         , testCase "placeOrder"         (do o   <- creatNewOrder
-                                            oid <- case_placeOrder conf o
+                                            oid <- run_placeOrder conf o
                                             return ()
                                         )
 
-        , testCase "getOrderList"       (do case_getOrderList conf [Open, Pending] -- making sure this request is well formed
-                                            os <- case_getOrderList conf []
+        , testCase "getOrderList"       (do run_getOrderList conf [Open, Pending] -- making sure this request is well formed
+                                            os <- run_getOrderList conf []
                                             case os of
                                                 [] -> assertFailure "Received empty order list"
                                                 _  -> return ()
                                         )
 
         , testCase "getOrder"           (do no  <- creatNewOrder
-                                            oid <- case_placeOrder conf no
-                                            o   <- case_getOrder conf oid
+                                            oid <- run_placeOrder conf no
+                                            o   <- run_getOrder conf oid
                                             assertEqual "order price"    (noPrice no) (orderPrice o)
                                             assertEqual "order size"     (noSize  no) (orderSize  o)
                                             assertEqual "order side"     (noSide  no) (orderSide  o)
                                             assertEqual "order product"  (noProductId no) (orderProductId o)
                                         )
         , testCase "cancelOrder"        (do no  <- creatNewOrder
-                                            oid <- case_placeOrder  conf no
-                                            os  <- case_getOrderList conf [Open, Pending]
-                                            case_cancelOrder conf oid
-                                            os' <- case_getOrderList conf [Open, Pending]
+                                            oid <- run_placeOrder  conf no
+                                            os  <- run_getOrderList conf [Open, Pending]
+                                            run_cancelOrder conf oid
+                                            os' <- run_getOrderList conf [Open, Pending]
                                             case os \\ os' of
                                                             [o] -> do
                                                                     assertEqual "order price"    (noPrice no) (orderPrice o)
@@ -84,25 +90,24 @@ tests conf = testGroup "Private"
                                                             [] -> assertFailure "order not canceled"
                                                             _  -> assertFailure "more than one order canceled"
                                         )
-        , testCase "getFills"           (do oid <- case_placeOrder conf giveAwayOrder
-                                            putStrLn $ "OID: " ++ show oid
-                                            os <- case_getOrderList conf []
-                                            threadDelay $ 1000 * 1000 * 3
-                                            fs <- case_getFills conf Nothing Nothing  -- FIX ME!!! (Just oid)
-                                            putStrLn $ "Fills: " ++ show fs
-                                            print os
 
-                                            case fs of
-                                                [] -> assertFailure "No fills found for an order that should execute immediately"
-                                                _  -> return ()
+        -- See NOTE: [Fills in Sandbox]
+        , testCase "getFills"           (case apiType conf of
+                                            Sandbox -> assertFailure "Running in Sanboxed environment. ** Cannot run getFills tests **"
+                                            Live -> do oid <- run_placeOrder conf giveAwayOrder
+                                                       fs <- run_getFills conf (Just oid) Nothing
+                                                       case fs of
+                                                           [] -> assertFailure "No fills found for an order that should execute immediately"
+                                                           _  -> return ()
                                         )
         ]
 
 -----------------------------------------------
 giveAwayOrder :: NewOrder
 giveAwayOrder = NewOrder
-    { noSize      = 0.1
-    , noPrice     = 10 -- super cheap! This *will* execute
+    -- CAREFUL CHANGING THESE VALUES IF YOU PERFORM TESTING IN THE LIVE ENVIRONMENT. YOU MAY LOOSE MONEY.
+    { noSize      = 0.01
+    , noPrice     = 1 -- 1 dollar! super cheap! This *will* execute
     , noSide      = Sell
     , noProductId = "BTC-USD"
     , noClientOid = Nothing
@@ -114,8 +119,9 @@ creatNewOrder = do
     -- can't be deterministic because exchange is stateful
     -- running a test twice with same random input may produce different results
     sz <- randomRIO (0,9999)
+    -- CAREFUL CHANGING THESE VALUES IF YOU PERFORM TESTING IN THE LIVE ENVIRONMENT. YOU MAY LOOSE MONEY.
     return NewOrder
-        { noSize      = 1 + Size (CoinScientific $ fromInteger sz / 10000 )
+        { noSize      = 0.01 + Size (CoinScientific $ fromInteger sz / 1000000 )
         , noPrice     = 10
         , noSide      = Buy
         , noProductId = "BTC-USD"
@@ -137,26 +143,26 @@ onSuccess conf apicall errorstring = do
             Left  e -> print e >> error errorstring
             Right a -> return a
 
-case_getAccountList :: ExchangeConf -> IO [Account]
-case_getAccountList conf = onSuccess conf getAccountList "Failed to get account list"
+run_getAccountList :: ExchangeConf -> IO [Account]
+run_getAccountList conf = onSuccess conf getAccountList "Failed to get account list"
 
-case_getAccount :: ExchangeConf -> AccountId -> IO Account
-case_getAccount conf acID = onSuccess conf (getAccount acID) "Failed to get account info"
+run_getAccount :: ExchangeConf -> AccountId -> IO Account
+run_getAccount conf acID = onSuccess conf (getAccount acID) "Failed to get account info"
 
-case_getAccountLedger :: ExchangeConf -> AccountId -> IO [Entry]
-case_getAccountLedger conf acID = onSuccess conf (getAccountLedger acID) "Failed to get accountledger"
+run_getAccountLedger :: ExchangeConf -> AccountId -> IO [Entry]
+run_getAccountLedger conf acID = onSuccess conf (getAccountLedger acID) "Failed to get account ledger"
 
-case_placeOrder :: ExchangeConf -> NewOrder -> IO OrderId
-case_placeOrder conf o = onSuccess conf (createOrder o) "Failed to create order"
+run_placeOrder :: ExchangeConf -> NewOrder -> IO OrderId
+run_placeOrder conf o = onSuccess conf (createOrder o) "Failed to create order"
 
-case_getOrder :: ExchangeConf -> OrderId -> IO Order
-case_getOrder conf oid = onSuccess conf (getOrder oid) "Failed to get order info"
+run_getOrder :: ExchangeConf -> OrderId -> IO Order
+run_getOrder conf oid = onSuccess conf (getOrder oid) "Failed to get order info"
 
-case_getOrderList :: ExchangeConf -> [OrderStatus] -> IO [Order]
-case_getOrderList conf ss = onSuccess conf (getOrderList ss) "Failed to get order list"
+run_getOrderList :: ExchangeConf -> [OrderStatus] -> IO [Order]
+run_getOrderList conf ss = onSuccess conf (getOrderList ss) "Failed to get order list"
 
-case_cancelOrder :: ExchangeConf -> OrderId -> IO ()
-case_cancelOrder conf oid = onSuccess conf (cancelOrder oid) "Failed to cancel order"
+run_cancelOrder :: ExchangeConf -> OrderId -> IO ()
+run_cancelOrder conf oid = onSuccess conf (cancelOrder oid) "Failed to cancel order"
 
-case_getFills :: ExchangeConf -> Maybe OrderId -> Maybe ProductId -> IO [Fill]
-case_getFills conf moid mpid = onSuccess conf (getFills moid mpid) "Failed to get fills"
+run_getFills :: ExchangeConf -> Maybe OrderId -> Maybe ProductId -> IO [Fill]
+run_getFills conf moid mpid = onSuccess conf (getFills moid mpid) "Failed to get fills"

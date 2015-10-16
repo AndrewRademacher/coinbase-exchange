@@ -32,6 +32,8 @@ import           Text.Printf
 
 import           Coinbase.Exchange.Types
 
+-- import Debug.Trace
+
 type Signed = Bool
 
 voidBody :: Maybe ()
@@ -122,7 +124,7 @@ processResponse :: ( FromJSON b
                 => Response (ResumableSource m BS.ByteString) -> m b
 processResponse res =
     case responseStatus res of
-        s | s == status200 -> do body <- responseBody res $$+- sinkParser (fmap fromJSON json)
+        s | s == status200 -> do body <- responseBody res $$+- sinkParser (fmap {-(\x -> trace (show x) fromJSON x)-} fromJSON json)
                                  case body of
                                      Success b -> return b
                                      Error  er -> throwError $ ParseFailure $ T.pack er

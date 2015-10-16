@@ -43,14 +43,14 @@ withCoinbase act = do
         tPass   <- liftM CBS.pack $ getEnv "COINBASE_PASSPHRASE"
 
         case mkToken tKey tSecret tPass of
-            Right tok -> do res <- runExchange (ExchangeConf mgr (Just tok) Sandbox) act
+            Right tok -> do res <- runExchange (ExchangeConf mgr (Just tok) Live) act
                             case res of
                                 Right s -> return s
                                 Left  f -> error $ show f
             Left   er -> error $ show er
 
 printSocket :: IO ()
-printSocket = subscribe Sandbox btc $ \conn -> do
+printSocket = subscribe Live btc $ \conn -> do
         putStrLn "Connected."
         _ <- forkIO $ forever $ do
             ds <- WS.receiveData conn

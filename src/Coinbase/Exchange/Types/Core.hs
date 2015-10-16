@@ -34,6 +34,9 @@ newtype Price = Price { unPrice :: CoinScientific }
 newtype Size = Size { unSize :: CoinScientific }
     deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
+newtype Cost = Cost { unCost :: CoinScientific }
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
+
 newtype OrderId = OrderId { unOrderId :: UUID }
     deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 

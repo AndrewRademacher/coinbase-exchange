@@ -179,21 +179,60 @@ instance FromJSON SelfTrade where
     parseJSON _ = mzero
 
 data NewOrder
-    = NewOrder
-        { noSize      :: Size
-        , noPrice     :: Price
+    = NewLimitOrder
+        { noProductId :: ProductId
         , noSide      :: Side
-        , noProductId :: ProductId
+        , noSelfTrade :: SelfTrade
         , noClientOid :: Maybe ClientOrderId
-        , noSelfTrade :: Maybe SelfTrade
+        ---
+        , noPrice     :: Price
+        , noSize      :: Size
+        ,noTimeInForce:: OrderContigency
+        , noPostOnly  :: Bool
+        }
+    | NewMarketOrder
+        { noProductId :: ProductId
+        , noSide      :: Side
+        , noSelfTrade :: SelfTrade
+        , noClientOid :: Maybe ClientOrderId
+        ---
+        , noSizeAndOrFunds  :: Either Size (Maybe Size, Cost)
         }
     deriving (Show, Data, Typeable, Generic)
 
 instance NFData NewOrder
 instance ToJSON NewOrder where
-    toJSON = genericToJSON coinbaseAesonOptions
-instance FromJSON NewOrder where
-    parseJSON = genericParseJSON coinbaseAesonOptions
+        toJSON NewLimitOrder{..} = object
+           ([ "type" .= ("limit" :: Text)
+            , "product_id"    .= noProductId
+            , "side"          .= noSide
+            , "stp"           .= noSelfTrade
+            , "price"         .= noPrice
+            , "size"          .= noSize
+            , "time_in_force" .= noTimeInForce
+            , "post_only"     .= noPostOnly
+            ] ++ clientID )
+            where
+                clientID = case noClientOid of
+                                Just cid -> [ "client_oid" .= cid ]
+                                Nothing  -> []
+
+        toJSON NewMarketOrder{..} = object
+           ([ "type" .= ("market" :: Text)
+            , "product_id"    .= noProductId
+            , "side"          .= noSide
+            , "stp"           .= noSelfTrade
+            ] ++ clientID ++ size ++ funds )
+            where
+                clientID = case noClientOid of
+                                Just cid -> [ "client_oid" .= cid ]
+                                Nothing  -> []
+                (size,funds) = case noSizeAndOrFunds of
+                                Left  s -> (["size" .= s],[])
+                                Right (ms,f) -> case ms of
+                                            Nothing -> ( []            , ["funds" .= f] )
+                                            Just s' -> ( ["size" .= s'], ["funds" .= f] )
+
 
 data OrderConfirmation
     = OrderConfirmation

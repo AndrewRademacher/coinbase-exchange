@@ -55,8 +55,9 @@ tests conf = testGroup "Private"
                                                 _  -> return ()
                                         )
 
-        , testCase "placeOrder"         (do o   <- creatNewOrder
-                                            oid <- run_placeOrder conf o
+        , testCase "placeOrder"         (do o   <- creatNewLimitOrder
+                                            oid <- run_placeOrder conf o             -- limit order
+                                            oid'<- run_placeOrder conf giveAwayOrder -- market order
                                             return ()
                                         )
 
@@ -67,7 +68,7 @@ tests conf = testGroup "Private"
                                                 _  -> return ()
                                         )
 
-        , testCase "getOrder"           (do no  <- creatNewOrder
+        , testCase "getOrder"           (do no  <- creatNewLimitOrder
                                             oid <- run_placeOrder conf no
                                             o   <- run_getOrder conf oid
                                             assertEqual "order price"    (noPrice no) (orderPrice o)
@@ -75,7 +76,7 @@ tests conf = testGroup "Private"
                                             assertEqual "order side"     (noSide  no) (orderSide  o)
                                             assertEqual "order product"  (noProductId no) (orderProductId o)
                                         )
-        , testCase "cancelOrder"        (do no  <- creatNewOrder
+        , testCase "cancelOrder"        (do no  <- creatNewLimitOrder
                                             oid <- run_placeOrder  conf no
                                             os  <- run_getOrderList conf [Open, Pending]
                                             run_cancelOrder conf oid
@@ -104,30 +105,32 @@ tests conf = testGroup "Private"
 
 -----------------------------------------------
 giveAwayOrder :: NewOrder
-giveAwayOrder = NewOrder
+giveAwayOrder = NewMarketOrder
     -- CAREFUL CHANGING THESE VALUES IF YOU PERFORM TESTING IN THE LIVE ENVIRONMENT. YOU MAY LOOSE MONEY.
-    { noSize      = 0.01
-    , noPrice     = 1 -- 1 dollar! super cheap! This *will* execute
+    { noProductId = "BTC-USD"
     , noSide      = Sell
-    , noProductId = "BTC-USD"
+    , noSelfTrade = DecrementAndCancel
     , noClientOid = Nothing
-    , noSelfTrade = Nothing
+    , noSizeAndOrFunds = Right (Just 0.01, 5) -- at most 1 BTC cent or 5 dollars per test
     }
 
-creatNewOrder :: IO NewOrder
-creatNewOrder = do
+creatNewLimitOrder :: IO NewOrder
+creatNewLimitOrder = do
     -- can't be deterministic because exchange is stateful
     -- running a test twice with same random input may produce different results
     sz <- randomRIO (0,9999)
     -- CAREFUL CHANGING THESE VALUES IF YOU PERFORM TESTING IN THE LIVE ENVIRONMENT. YOU MAY LOOSE MONEY.
-    return NewOrder
+    return NewLimitOrder
         { noSize      = 0.01 + Size (CoinScientific $ fromInteger sz / 1000000 )
         , noPrice     = 10
-        , noSide      = Buy
         , noProductId = "BTC-USD"
+        , noSide      = Buy
+        , noSelfTrade = DecrementAndCancel
         , noClientOid = Nothing
-        , noSelfTrade = Nothing
+        , noPostOnly  = False
+        , noTimeInForce = GoodTillCanceled
         }
+
 
 findUSDAccount :: [Account] -> Account
 findUSDAccount as = case filter (\a -> accCurrency a == CurrencyId "USD") as of

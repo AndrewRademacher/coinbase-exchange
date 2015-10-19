@@ -3,6 +3,8 @@
 
 module Coinbase.Exchange.Private.Test
     ( tests
+    , giveAwayOrder
+    , run_placeOrder
     ) where
 
 import           Control.Monad
@@ -12,7 +14,7 @@ import           Data.Maybe
 import           Data.List
 import           Data.Time
 import           Data.Scientific
-import           Data.UUID.V4
+import           Data.UUID
 
 import           System.Random
 
@@ -110,7 +112,7 @@ giveAwayOrder = NewMarketOrder
     { noProductId = "BTC-USD"
     , noSide      = Sell
     , noSelfTrade = DecrementAndCancel
-    , noClientOid = Nothing
+    , noClientOid = Just $ ClientOrderId $ fromJust $ fromString "c2cc10e1-57d6-4b6f-9899-deadbeef2d8c"
     , noSizeAndOrFunds = Right (Just 0.01, 5) -- at most 1 BTC cent or 5 dollars per test
     }
 
@@ -126,7 +128,7 @@ creatNewLimitOrder = do
         , noProductId = "BTC-USD"
         , noSide      = Buy
         , noSelfTrade = DecrementAndCancel
-        , noClientOid = Nothing
+        , noClientOid = Just $ ClientOrderId $ fromJust $ fromString "c2cc10e1-57d6-4b6f-9899-111122223d8c"
         , noPostOnly  = False
         , noTimeInForce = GoodTillCanceled
         }

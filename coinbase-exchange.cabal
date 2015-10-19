@@ -105,5 +105,8 @@ test-suite test-coinbase
                     ,   transformers
                     ,   random
                     ,   scientific
+                    ,   async
+                    ,   websockets
+                    ,   aeson
 
                     ,   coinbase-exchange

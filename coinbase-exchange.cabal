@@ -88,6 +88,7 @@ test-suite test-coinbase
     type:               exitcode-stdio-1.0
     main-is:            Main.hs
     hs-source-dirs:     test
+    ghc-options:        -threaded
     default-language:   Haskell2010
 
     build-depends:      base                ==4.*

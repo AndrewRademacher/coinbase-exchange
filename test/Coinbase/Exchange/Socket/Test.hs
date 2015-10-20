@@ -19,16 +19,17 @@ import           Coinbase.Exchange.Socket
 
 import qualified Coinbase.Exchange.Private.Test  as P
 
+import Debug.Trace
 
 tests :: ExchangeConf -> TestTree
 tests conf = testGroup "Socket"
         [ testCase "Parse Socket Stream"     (parseSocket conf (threadDelay $ 1000000 * 30))
-        , testCase "Parse with Market Order" (parseSocket conf (do
-                                                                    threadDelay $ 1000000 * 15
-                                                                    oid'<- P.run_placeOrder conf P.giveAwayOrder -- place market order
-                                                                    print oid'
-                                                                    threadDelay $ 1000000 * 15
-                                                               ))
+        -- , testCase "Parse with Market Order" (parseSocket conf (do
+        --                                                             threadDelay $ 1000000 * 15
+        --                                                             oid'<- P.run_placeOrder conf P.giveAwayOrder -- place market order
+        --                                                             print oid'
+        --                                                             threadDelay $ 1000000 * 15
+        --                                                        ))
         ]
 
 
@@ -39,8 +40,10 @@ parseSocket conf challenge = subscribe (apiType conf) (ProductId "BTC-USD") $ \c
     putStr "Connected. "
     waitCancelThreads challenge $
         forever $ do
+            putStrLn "I started..."
             ds <- WS.receiveData conn
-            let res = eitherDecode ds
+            putStrLn "But don't seem to finish!..."
+            let res = eitherDecode (trace (show ds) ds)
             case res :: Either String ExchangeMessage of
                 Left er -> print er   >> assertFailure "Parsing failure found"
                 Right v -> putStr "." >> return ()

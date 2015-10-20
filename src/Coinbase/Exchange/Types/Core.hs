@@ -59,6 +59,17 @@ instance FromJSON Side where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
 --
+data OrderType = Limit | Market
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
+
+instance NFData OrderType
+instance Hashable OrderType
+instance ToJSON OrderType where
+    toJSON = genericToJSON coinbaseAesonOptions
+instance FromJSON OrderType where
+    parseJSON = genericParseJSON coinbaseAesonOptions
+
+--
 
 newtype TradeId = TradeId { unTradeId :: Word64 }
     deriving (Eq, Ord, Num, Show, Read, Data, Typeable, Generic, NFData, Hashable)

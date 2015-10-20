@@ -16,6 +16,7 @@ import           Data.Text                    (Text)
 import           Data.Time
 import           Data.Word
 import           GHC.Generics
+import qualified Data.HashMap.Strict as H
 
 import           Coinbase.Exchange.Types.Core  hiding (OrderStatus(..))
 
@@ -197,8 +198,10 @@ instance FromJSON ExchangeMessage where
                                 <*> m .: "side"
                                 <*> pure mcid
                                 <*> (do
-                                        ms <- m .:? "size"
-                                        mf <- m .:? "funds"
+                                        -- I can't try to parse "size" or "funds" with (.:?) here, their type is CoinScientific
+                                        -- but the fields may be "size":null and that will fail the (m .:? "size") parser.
+                                        ms <- m .:?? "size"
+                                        mf <- m .:?? "funds"
                                         case (ms,mf) of
                                             (Nothing, Nothing) -> mzero
                                             (Just s , Nothing) -> return $ Left  s
@@ -207,8 +210,18 @@ instance FromJSON ExchangeMessage where
                                             )
 
     parseJSON _ = mzero
----------------------------
 
+---------------------------
+-- This is based on the code for Aeson's (.:?) operator. Except, we're more
+-- lax than (.:?) and also return 'Nothing' when the field is (JSON) null.
+(.:??) :: (FromJSON a) => Object -> Text -> Parser (Maybe a)
+obj .:?? key = case H.lookup key obj of
+               Nothing -> pure Nothing
+               Just v  -> if v == Null
+                   then pure Nothing
+                   else obj .:? key
+
+---------------------------
 
 instance ToJSON ExchangeMessage where
     toJSON Subscribe{..} = object

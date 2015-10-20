@@ -54,6 +54,7 @@ library
                     ,   cryptohash
                     ,   byteable
                     ,   exceptions
+                    ,   unordered-containers
 
                     ,   old-locale
 
@@ -81,6 +82,7 @@ executable sandbox
                     ,   network
                     ,   wuss
                     ,   scientific
+                    ,   unordered-containers
 
                     ,   coinbase-exchange
 
@@ -109,5 +111,6 @@ test-suite test-coinbase
                     ,   async
                     ,   websockets
                     ,   aeson
+                    ,   unordered-containers
 
                     ,   coinbase-exchange

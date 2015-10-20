@@ -23,6 +23,7 @@ import           Data.UUID
 import           Data.UUID.Aeson     ()
 import           Data.Word
 import           GHC.Generics
+import           Text.Read           (readMaybe)
 
 
 newtype ProductId = ProductId { unProductId :: Text }
@@ -128,12 +129,9 @@ instance ToJSON CoinScientific where
     toJSON (CoinScientific v) = String . T.pack . show $ v
 instance FromJSON CoinScientific where
     parseJSON = withText "CoinScientific" $ \t ->
-        case maybeRead (T.unpack t) of
+        case readMaybe (T.unpack t) of
             Just  n -> pure $ CoinScientific n
             Nothing -> fail "Could not parse string scientific."
-
-maybeRead :: (Read a) => String -> Maybe a
-maybeRead = fmap fst . listToMaybe . reads
 
 ----
 

@@ -26,7 +26,7 @@ main = do
 
 tests :: ExchangeConf -> TestTree
 tests conf = testGroup "Tests"
-        [ {-MarketData.tests conf
+        [ MarketData.tests conf
         , Private.tests    conf
-        , -} Socket.tests     conf
+        , Socket.tests     conf
         ]

@@ -1,5 +1,5 @@
 name:                coinbase-exchange
-version:             0.2.0.2
+version:             0.3.0.0
 synopsis:            Connector library for the coinbase exchange.
 description:         Access library for the coinbase exchange. Allows the use
                      of both the public market data API as well as the private
@@ -69,7 +69,7 @@ executable sandbox
 
                     ,   uuid
                     ,   text
-                    ,   aeson
+                    ,   aeson               >=0.10.0
                     ,   bytestring
                     ,   time
                     ,   old-locale
@@ -110,7 +110,7 @@ test-suite test-coinbase
                     ,   scientific
                     ,   async
                     ,   websockets
-                    ,   aeson
+                    ,   aeson               >=0.10.0
                     ,   unordered-containers
 
                     ,   coinbase-exchange

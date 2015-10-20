@@ -67,7 +67,7 @@ parseSocket conf challenge = subscribe (apiType conf) (ProductId "BTC-USD") $ \c
 -- a more thorough test would be better.
 reencodeSocket :: ExchangeConf -> IO ()
 reencodeSocket conf = subscribe (apiType conf) (ProductId "BTC-USD") $ \conn -> do
-    sequence_ $ replicate 1000 (decodeEncode conn)
+    sequence_ $ replicate 1000 (decodeEncode conn) -- currently takes under a minute on 'Live' feed
 
 decodeEncode :: WS.Connection -> IO ()
 decodeEncode conn = do

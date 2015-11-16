@@ -1,5 +1,5 @@
 name:                coinbase-exchange
-version:             0.2.0.2
+version:             0.3.0.0
 synopsis:            Connector library for the coinbase exchange.
 description:         Access library for the coinbase exchange. Allows the use
                      of both the public market data API as well as the private
@@ -11,7 +11,7 @@ author:              Andrew Rademacher
 maintainer:          andrewrademacher@gmail.com
 category:            Web
 build-type:          Simple
-cabal-version:       >=1.10
+cabal-version:       >=1.20
 
 library
     hs-source-dirs:     src
@@ -29,19 +29,19 @@ library
     other-modules:      Coinbase.Exchange.Rest
 
     build-depends:      base                ==4.*
-                    ,   mtl
+                    ,   mtl                 >=2.2
                     ,   resourcet
                     ,   transformers-base
                     ,   conduit
                     ,   conduit-extra
                     ,   http-conduit
-                    ,   aeson
+                    ,   aeson               >=0.10.0
                     ,   aeson-casing
                     ,   http-types
                     ,   text
                     ,   bytestring
                     ,   base64-bytestring
-                    ,   time
+                    ,   time                >=1.5
                     ,   scientific
                     ,   uuid
                     ,   uuid-aeson
@@ -54,6 +54,7 @@ library
                     ,   cryptohash
                     ,   byteable
                     ,   exceptions
+                    ,   unordered-containers
 
                     ,   old-locale
 
@@ -68,7 +69,7 @@ executable sandbox
 
                     ,   uuid
                     ,   text
-                    ,   aeson
+                    ,   aeson               >=0.10.0
                     ,   bytestring
                     ,   time
                     ,   old-locale
@@ -81,6 +82,7 @@ executable sandbox
                     ,   network
                     ,   wuss
                     ,   scientific
+                    ,   unordered-containers
 
                     ,   coinbase-exchange
 
@@ -88,6 +90,7 @@ test-suite test-coinbase
     type:               exitcode-stdio-1.0
     main-is:            Main.hs
     hs-source-dirs:     test
+    ghc-options:        -threaded
     default-language:   Haskell2010
 
     build-depends:      base                ==4.*
@@ -103,5 +106,11 @@ test-suite test-coinbase
                     ,   http-client-tls
                     ,   http-conduit
                     ,   transformers
+                    ,   random
+                    ,   scientific
+                    ,   async
+                    ,   websockets
+                    ,   aeson               >=0.10.0
+                    ,   unordered-containers
 
                     ,   coinbase-exchange

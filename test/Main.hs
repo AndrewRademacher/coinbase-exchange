@@ -11,6 +11,8 @@ import           Coinbase.Exchange.Types
 
 import qualified Coinbase.Exchange.MarketData.Test as MarketData
 import qualified Coinbase.Exchange.Private.Test    as Private
+import qualified Coinbase.Exchange.Socket.Test     as Socket
+
 main :: IO ()
 main = do
         mgr     <- newManager tlsManagerSettings
@@ -19,11 +21,12 @@ main = do
         tPass   <- liftM CBS.pack $ getEnv "COINBASE_PASSPHRASE"
 
         case mkToken tKey tSecret tPass of
-            Right tok -> defaultMain (tests $ ExchangeConf mgr (Just tok) Sandbox)
+            Right tok -> defaultMain (tests $ ExchangeConf mgr (Just tok) Live)
             Left   er -> error $ show er
 
 tests :: ExchangeConf -> TestTree
 tests conf = testGroup "Tests"
         [ MarketData.tests conf
-        , Private.tests conf
+        , Private.tests    conf
+        , Socket.tests     conf
         ]

@@ -24,10 +24,7 @@ import           Coinbase.Exchange.Types.Private
 import           Coinbase.Exchange.Types.Socket
 
 main :: IO ()
-main = putStrLn "Use GHCi."
-
-testCoinbaseTime :: String
-testCoinbaseTime = "2015-05-06 21:58:22.84227+0000"
+main = printSocket -- putStrLn "Use GHCi."
 
 btc :: ProductId
 btc = "BTC-USD"
@@ -38,9 +35,6 @@ start = Just $ parseTimeOrError True defaultTimeLocale "%FT%X%z" "2015-04-12T20:
 end :: Maybe UTCTime
 end = Just $ parseTimeOrError True defaultTimeLocale "%FT%X%z" "2015-04-23T20:22:37+0000"
 
-accountId :: AccountId
-accountId = AccountId $ fromJust $ fromString "52072cbb-4e76-496f-a479-166cb4d177fa"
-
 withCoinbase :: Exchange a -> IO a
 withCoinbase act = do
         mgr     <- newManager tlsManagerSettings
@@ -49,7 +43,7 @@ withCoinbase act = do
         tPass   <- liftM CBS.pack $ getEnv "COINBASE_PASSPHRASE"
 
         case mkToken tKey tSecret tPass of
-            Right tok -> do res <- runExchange (ExchangeConf mgr (Just tok) Sandbox) act
+            Right tok -> do res <- runExchange (ExchangeConf mgr (Just tok) Live) act
                             case res of
                                 Right s -> return s
                                 Left  f -> error $ show f

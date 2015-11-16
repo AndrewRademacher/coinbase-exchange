@@ -16,7 +16,6 @@ import           Data.Aeson.Types
 import           Data.Data
 import           Data.Hashable
 import           Data.Int
-import           Data.Scientific
 import           Data.String
 import           Data.Text                    (Text)
 import           Data.Time
@@ -35,9 +34,9 @@ data Product
         { prodId             :: ProductId
         , prodBaseCurrency   :: CurrencyId
         , prodQuoteCurrency  :: CurrencyId
-        , prodBaseMinSize    :: Scientific
-        , prodBaseMaxSize    :: Scientific
-        , prodQuoteIncrement :: Scientific
+        , prodBaseMinSize    :: CoinScientific
+        , prodBaseMaxSize    :: CoinScientific
+        , prodQuoteIncrement :: CoinScientific
         , prodDisplayName    :: Text
         }
     deriving (Show, Data, Typeable, Generic)
@@ -113,14 +112,14 @@ data Trade
 
 instance NFData Trade
 instance ToJSON Trade where
-    toJSON Trade{..} = object [ "time"      .= CoinbaseTime tradeTime
+    toJSON Trade{..} = object [ "time"      .= tradeTime
                               , "trade_id"  .= tradeTradeId
                               , "price"     .= tradePrice
                               , "size"      .= tradeSize
                               , "side"      .= tradeSide
                               ]
 instance FromJSON Trade where
-    parseJSON (Object m) = Trade <$> liftM unCoinbaseTime (m .: "time")
+    parseJSON (Object m) = Trade <$> m .: "time"
                                  <*> m .: "trade_id"
                                  <*> m .: "price"
                                  <*> m .: "size"

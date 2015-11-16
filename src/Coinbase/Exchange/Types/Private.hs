@@ -37,7 +37,7 @@ data Account
         , accAvailable :: CoinScientific
         , accCurrency  :: CurrencyId
         }
-    deriving (Show, Data, Typeable, Generic)
+    deriving (Show, Eq, Data, Typeable, Generic)
 
 instance NFData Account
 instance ToJSON Account where
@@ -64,7 +64,7 @@ data Entry
 instance NFData Entry
 instance ToJSON Entry where
     toJSON Entry{..} = object [ "id"         .= entryId
-                              , "created_at" .= CoinbaseTime entryCreatedAt
+                              , "created_at" .= entryCreatedAt
                               , "amount"     .= entryAmount
                               , "balance"    .= entryBalance
                               , "type"       .= entryType
@@ -73,7 +73,7 @@ instance ToJSON Entry where
 instance FromJSON Entry where
     parseJSON (Object m) = Entry
         <$> m .: "id"
-        <*> liftM unCoinbaseTime (m .: "created_at")
+        <*> m .: "created_at"
         <*> m .: "amount"
         <*> m .: "balance"
         <*> m .: "type"
@@ -138,6 +138,24 @@ instance FromJSON Hold where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
 -- Orders
+data OrderContigency
+    = GoodTillCanceled
+    | ImmediateOrCancel
+    | FillOrKill
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
+
+instance NFData   OrderContigency
+instance Hashable OrderContigency
+
+instance ToJSON OrderContigency where
+    toJSON GoodTillCanceled  = String "GTC"
+    toJSON ImmediateOrCancel = String "IOC"
+    toJSON FillOrKill        = String "FOK"
+instance FromJSON OrderContigency where
+    parseJSON (String "GTC") = return GoodTillCanceled
+    parseJSON (String "IOC") = return ImmediateOrCancel
+    parseJSON (String "FOK") = return FillOrKill
+    parseJSON _ = mzero
 
 data SelfTrade
     = DecrementAndCancel
@@ -161,21 +179,60 @@ instance FromJSON SelfTrade where
     parseJSON _ = mzero
 
 data NewOrder
-    = NewOrder
-        { noSize      :: Size
-        , noPrice     :: Price
+    = NewLimitOrder
+        { noProductId :: ProductId
         , noSide      :: Side
-        , noProductId :: ProductId
+        , noSelfTrade :: SelfTrade
         , noClientOid :: Maybe ClientOrderId
-        , noSelfTrade :: Maybe SelfTrade
+        ---
+        , noPrice     :: Price
+        , noSize      :: Size
+        ,noTimeInForce:: OrderContigency
+        , noPostOnly  :: Bool
+        }
+    | NewMarketOrder
+        { noProductId :: ProductId
+        , noSide      :: Side
+        , noSelfTrade :: SelfTrade
+        , noClientOid :: Maybe ClientOrderId
+        ---
+        , noSizeAndOrFunds  :: Either Size (Maybe Size, Cost)
         }
     deriving (Show, Data, Typeable, Generic)
 
 instance NFData NewOrder
 instance ToJSON NewOrder where
-    toJSON = genericToJSON coinbaseAesonOptions
-instance FromJSON NewOrder where
-    parseJSON = genericParseJSON coinbaseAesonOptions
+        toJSON NewLimitOrder{..} = object
+           ([ "type" .= ("limit" :: Text)
+            , "product_id"    .= noProductId
+            , "side"          .= noSide
+            , "stp"           .= noSelfTrade
+            , "price"         .= noPrice
+            , "size"          .= noSize
+            , "time_in_force" .= noTimeInForce
+            , "post_only"     .= noPostOnly
+            ] ++ clientID )
+            where
+                clientID = case noClientOid of
+                                Just cid -> [ "client_oid" .= cid ]
+                                Nothing  -> []
+
+        toJSON NewMarketOrder{..} = object
+           ([ "type" .= ("market" :: Text)
+            , "product_id"    .= noProductId
+            , "side"          .= noSide
+            , "stp"           .= noSelfTrade
+            ] ++ clientID ++ size ++ funds )
+            where
+                clientID = case noClientOid of
+                                Just cid -> [ "client_oid" .= cid ]
+                                Nothing  -> []
+                (size,funds) = case noSizeAndOrFunds of
+                                Left  s -> (["size" .= s],[])
+                                Right (ms,f) -> case ms of
+                                            Nothing -> ( []            , ["funds" .= f] )
+                                            Just s' -> ( ["size" .= s'], ["funds" .= f] )
+
 
 data OrderConfirmation
     = OrderConfirmation
@@ -190,52 +247,127 @@ instance FromJSON OrderConfirmation where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
 data Order
-    = Order
+    = LimitOrder
         { orderId         :: OrderId
-        , orderSize       :: Size
-        , orderPrice      :: Price
         , orderProductId  :: ProductId
         , orderStatus     :: OrderStatus
-        , orderFilledSize :: Maybe Size
-        , orderFilledFees :: Maybe Price
+        , orderSelfTrade  :: SelfTrade
         , orderSettled    :: Bool
         , orderSide       :: Side
         , orderCreatedAt  :: UTCTime
+        , orderFilledSize :: Maybe Size
+        , orderFilledFees :: Maybe Price
         , orderDoneAt     :: Maybe UTCTime
         , orderDoneReason :: Maybe Reason
+
+        , orderPrice      :: Price
+        , orderSize       :: Size
+        , orderTimeInForce:: OrderContigency
+        , orderPostOnly   :: Bool
+        }
+    | MarketOrder
+        { orderId         :: OrderId
+        , orderProductId  :: ProductId
+        , orderStatus     :: OrderStatus
+        , orderSelfTrade  :: SelfTrade
+        , orderSettled    :: Bool
+        , orderSide       :: Side
+        , orderCreatedAt  :: UTCTime
+        , orderFilledSize :: Maybe Size
+        , orderFilledFees :: Maybe Price
+        , orderDoneAt     :: Maybe UTCTime
+        , orderDoneReason :: Maybe Reason
+
+        , orderSizeAndOrFunds  :: Either Size (Maybe Size, Cost)
         }
     deriving (Show, Data, Typeable, Generic)
 
 instance NFData Order
 instance ToJSON Order where
-    toJSON Order{..} = object
-        [ "id"          .= orderId
-        , "size"        .= orderSize
-        , "price"       .= orderPrice
-        , "product_id"  .= orderProductId
-        , "status"      .= orderStatus
-        , "filled_size" .= orderFilledSize
-        , "filled_fees" .= orderFilledFees
-        , "settled"     .= orderSettled
-        , "side"        .= orderSide
-        , "created_at"  .= CoinbaseTime orderCreatedAt
-        , "done_at"     .= liftM CoinbaseTime orderDoneAt
-        , "done_reason" .= orderDoneReason
+    toJSON LimitOrder{..} = object
+        [ "type" .= ("limit" :: Text)
+        , "id"            .= orderId
+        , "product_id"    .= orderProductId
+        , "status"        .= orderStatus
+        , "stp"           .= orderSelfTrade
+        , "settled"       .= orderSettled
+        , "side"          .= orderSide
+        , "created_at"    .= orderCreatedAt
+        , "filled_size"   .= orderFilledSize
+        , "filled_fees"   .= orderFilledFees
+        , "done_at"       .= orderDoneAt
+        , "done_reason"   .= orderDoneReason
+
+        , "price"         .= orderPrice
+        , "size"          .= orderSize
+        , "time_in_force" .= orderTimeInForce
+        , "post_only"     .= orderPostOnly
         ]
+    toJSON MarketOrder{..} = object
+       ([ "type" .= ("market" :: Text)
+        , "id"            .= orderId
+        , "product_id"    .= orderProductId
+        , "status"        .= orderStatus
+        , "stp"           .= orderSelfTrade
+        , "settled"       .= orderSettled
+        , "side"          .= orderSide
+        , "created_at"    .= orderCreatedAt
+        , "filled_size"   .= orderFilledSize
+        , "filled_fees"   .= orderFilledFees
+        , "done_at"       .= orderDoneAt
+        , "done_reason"   .= orderDoneReason
+        ] ++ size ++ funds )
+            where (size,funds) = case orderSizeAndOrFunds of
+                        Left  s -> (["size" .= s],[])
+                        Right (ms,f) -> case ms of
+                                    Nothing -> ( []            , ["funds" .= f] )
+                                    Just s' -> ( ["size" .= s'], ["funds" .= f] )
+
+
 instance FromJSON Order where
-    parseJSON (Object m) = Order
-        <$> m .: "id"
-        <*> m .: "size"
-        <*> m .: "price"
-        <*> m .: "product_id"
-        <*> m .: "status"
-        <*> m .:? "filled_size"
-        <*> m .:? "filled_fees"
-        <*> m .: "settled"
-        <*> m .: "side"
-        <*> liftM unCoinbaseTime (m .: "created_at")
-        <*> liftM (liftM unCoinbaseTime) (m .:? "done_at")
-        <*> m .:? "done_reason"
+    parseJSON (Object m) = do
+        ordertype <- m .: "type"
+        case (ordertype :: String) of
+            "limit" -> LimitOrder
+                <$> m .: "id"
+                <*> m .: "product_id"
+                <*> m .: "status"
+                <*> m .: "stp"
+                <*> m .: "settled"
+                <*> m .: "side"
+                <*> m .: "created_at"
+                <*> m .:? "filled_size"
+                <*> m .:? "filled_fees"
+                <*> m .:? "done_at"
+                <*> m .:? "done_reason"
+                <*> m .: "price"
+                <*> m .: "size"
+                <*> m .:? "time_in_force" .!= GoodTillCanceled -- older orders don't seem to have this field
+                <*> m .: "post_only"
+
+            "market" -> MarketOrder
+                <$> m .: "id"
+                <*> m .: "product_id"
+                <*> m .: "status"
+                <*> m .: "stp"
+                <*> m .: "settled"
+                <*> m .: "side"
+                <*> m .: "created_at"
+                <*> m .:? "filled_size"
+                <*> m .:? "filled_fees"
+                <*> m .:? "done_at"
+                <*> m .:? "done_reason"
+                <*> (do
+                        ms <- m .:? "size"
+                        mf <- m .:? "funds"
+                        case (ms,mf) of
+                            (Nothing, Nothing) -> mzero
+                            (Just s , Nothing) -> return $ Left  s
+                            (Nothing, Just f ) -> return $ Right (Nothing, f)
+                            (Just s , Just f ) -> return $ Right (Just s , f)
+                            )
+            _ -> mzero
+
     parseJSON _ = mzero
 
 -- Fills
@@ -278,7 +410,7 @@ instance ToJSON Fill where
         , "price"       .= fillPrice
         , "size"        .= fillSize
         , "order_id"    .= fillOrderId
-        , "created_at"  .= CoinbaseTime fillCreatedAt
+        , "created_at"  .= fillCreatedAt
         , "liquidity"   .= fillLiquidity
         , "fee"         .= fillFee
         , "settled"     .= fillSettled
@@ -291,7 +423,7 @@ instance FromJSON Fill where
         <*> m .: "price"
         <*> m .: "size"
         <*> m .: "order_id"
-        <*> liftM unCoinbaseTime (m .: "created_at")
+        <*> m .: "created_at"
         <*> m .: "liquidity"
         <*> m .: "fee"
         <*> m .: "settled"

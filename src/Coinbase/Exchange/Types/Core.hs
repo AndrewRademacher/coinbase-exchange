@@ -23,6 +23,7 @@ import           Data.UUID
 import           Data.UUID.Aeson     ()
 import           Data.Word
 import           GHC.Generics
+import           Text.Read           (readMaybe)
 
 
 newtype ProductId = ProductId { unProductId :: Text }
@@ -32,6 +33,9 @@ newtype Price = Price { unPrice :: CoinScientific }
     deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 newtype Size = Size { unSize :: CoinScientific }
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
+
+newtype Cost = Cost { unCost :: CoinScientific }
     deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 newtype OrderId = OrderId { unOrderId :: UUID }
@@ -53,6 +57,17 @@ instance Hashable Side
 instance ToJSON Side where
     toJSON = genericToJSON coinbaseAesonOptions
 instance FromJSON Side where
+    parseJSON = genericParseJSON coinbaseAesonOptions
+
+--
+data OrderType = Limit | Market
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
+
+instance NFData OrderType
+instance Hashable OrderType
+instance ToJSON OrderType where
+    toJSON = genericToJSON coinbaseAesonOptions
+instance FromJSON OrderType where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
 --
@@ -114,29 +129,9 @@ instance ToJSON CoinScientific where
     toJSON (CoinScientific v) = String . T.pack . show $ v
 instance FromJSON CoinScientific where
     parseJSON = withText "CoinScientific" $ \t ->
-        case maybeRead (T.unpack t) of
+        case readMaybe (T.unpack t) of
             Just  n -> pure $ CoinScientific n
             Nothing -> fail "Could not parse string scientific."
-
-maybeRead :: (Read a) => String -> Maybe a
-maybeRead = fmap fst . listToMaybe . reads
-
-----
-
-newtype CoinbaseTime = CoinbaseTime { unCoinbaseTime :: UTCTime }
-    deriving (Eq, Ord, Show, Read, Data, Typeable, NFData)
-
-instance ToJSON CoinbaseTime where
-    toJSON (CoinbaseTime t) = String $ T.pack $
-        formatTime defaultTimeLocale coinbaseTimeFormat t ++ "00"
-instance FromJSON CoinbaseTime where
-    parseJSON = withText "Coinbase Time" $ \t ->
-        case parseTimeM True defaultTimeLocale coinbaseTimeFormat (T.unpack t ++ "00") of
-            Just d -> pure $ CoinbaseTime d
-            _      -> fail "could not parse coinbase time format."
-
-coinbaseTimeFormat :: String
-coinbaseTimeFormat = "%F %T%Q%z"
 
 ----
 

@@ -74,7 +74,6 @@ data ExchangeMessage
         , msgRemainingSize :: Size
         , msgPrice     :: Price
         , msgReason    :: Reason
-        , msgOrderType :: OrderType
         }
     | DoneMarket
         { msgTime      :: UTCTime
@@ -83,7 +82,6 @@ data ExchangeMessage
         , msgOrderId   :: OrderId
         , msgSide      :: Side
         , msgReason    :: Reason
-        , msgOrderType :: OrderType
         }
     | ChangeLimit
         { msgTime      :: UTCTime
@@ -101,7 +99,6 @@ data ExchangeMessage
         , msgSequence  :: Sequence
         , msgOrderId   :: OrderId
         , msgSide      :: Side
-        , msgPrice     :: Price
         , msgNewFunds  :: Cost
         , msgOldFunds  :: Cost
         }
@@ -137,7 +134,6 @@ instance FromJSON ExchangeMessage where
                         <*> m .: "remaining_size"
                         <*> m .: "price"
                         <*> m .: "reason"
-                        <*> m .: "order_type"
                     Market -> DoneMarket
                         <$> m .: "time"
                         <*> m .: "product_id"
@@ -145,7 +141,6 @@ instance FromJSON ExchangeMessage where
                         <*> m .: "order_id"
                         <*> m .: "side"
                         <*> m .: "reason"
-                        <*> m .: "order_type"
             "match" -> Match
                 <$> m .: "time"
                 <*> m .: "product_id"
@@ -165,7 +160,6 @@ instance FromJSON ExchangeMessage where
                                 <*> m .: "sequence"
                                 <*> m .: "order_id"
                                 <*> m .: "side"
-                                <*> m .: "price"
                                 <*> m .: "new_funds"
                                 <*> m .: "old_funds"
                     Just _ -> ChangeLimit
@@ -294,7 +288,6 @@ instance ToJSON ExchangeMessage where
         , "sequence"   .= msgSequence
         , "order_id"   .= msgOrderId
         , "side"       .= msgSide
-        , "price"      .= msgPrice
         , "new_funds"  .= msgNewFunds
         , "old_funds"  .= msgOldFunds
         ]

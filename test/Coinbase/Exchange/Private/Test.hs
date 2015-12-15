@@ -108,7 +108,7 @@ tests conf = testGroup "Private"
 -----------------------------------------------
 giveAwayOrder :: NewOrder
 giveAwayOrder = NewMarketOrder
-    -- CAREFUL CHANGING THESE VALUES IF YOU PERFORM TESTING IN THE LIVE ENVIRONMENT. YOU MAY LOOSE MONEY.
+    -- CAREFUL CHANGING THESE VALUES IF YOU PERFORM TESTING IN THE LIVE ENVIRONMENT. YOU MAY LOSE MONEY.
     { noProductId = "BTC-USD"
     , noSide      = Sell
     , noSelfTrade = DecrementAndCancel

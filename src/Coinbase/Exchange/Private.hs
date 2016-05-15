@@ -87,7 +87,7 @@ getFills moid mpid = coinbaseGet True ("/fills?" ++ oid ++ "&" ++ pid) voidBody
 -- Transfers
 
 createTransfer :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-               => TransferToCoinbase -> m ()
+               => TransferToCoinbase -> m TransferToCoinbaseResponse
 createTransfer = coinbasePost True "/transfers" . Just
 
 getRealCoinbaseAccountList :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)

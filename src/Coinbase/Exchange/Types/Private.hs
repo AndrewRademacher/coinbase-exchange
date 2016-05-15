@@ -440,20 +440,31 @@ newtype CoinbaseAccountId = CoinbaseAccountId { unCoinbaseAccountId :: UUID }
 
 data TransferToCoinbase
     = Deposit
-        { transAmount          :: Size
-        , transCoinbaseAccount :: CoinbaseAccountId
+        { trAmount            :: Size
+        , trCoinbaseAccountId :: CoinbaseAccountId
         }
     | Withdraw
-        { transAmount          :: Size
-        , transCoinbaseAccount :: CoinbaseAccountId
+        { trAmount            :: Size
+        , trCoinbaseAccountId :: CoinbaseAccountId
         }
     deriving (Show, Data, Typeable, Generic)
 
 instance NFData TransferToCoinbase
 instance ToJSON TransferToCoinbase where
     toJSON = genericToJSON coinbaseAesonOptions
-instance FromJSON TransferToCoinbase where
-    parseJSON = genericParseJSON coinbaseAesonOptions
+
+---------------------------
+data TransferToCoinbaseResponse
+    = TransferResponse
+        { trId :: TransferId
+        -- FIX ME! and other stuff I'm going to ignore.
+        } deriving (Eq, Show, Generic, Typeable)
+
+instance NFData   TransferToCoinbaseResponse
+instance FromJSON TransferToCoinbaseResponse where
+    parseJSON (Object m) = TransferResponse
+        <$> m .: "id"
+    parseJSON _ = mzero
 
 ---------------------------
 

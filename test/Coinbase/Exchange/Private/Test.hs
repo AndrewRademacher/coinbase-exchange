@@ -108,6 +108,19 @@ tests conf = testGroup "Private"
                                                            [] -> assertFailure "No fills found for an order that should execute immediately"
                                                            _  -> return ()
                                         )
+
+        -- This test cause a "403 Forbiden" error when run in the Sanbox
+        -- FIX ME! This fails if we try to transfer small amounts (e.g. 0.01 as that is `show`n as "1.0e-2" and does not pass validation.
+        , testCase "Transfer BTCs to Coinbase" $
+            case apiType conf of
+                Sandbox -> assertFailure "Running in Sanboxes environment. ** This test always fails - probably not implemented by Coinbase **"
+                Live -> do
+                    let transfer = Withdraw
+                            { trAmount            = 0.1
+                            , trCoinbaseAccountId = CoinbaseAccountId $ fromJust $ fromString "ebcb4c8b-334b-538a-a26c-85adab6cb4ba" }
+                    run_sendToCoinbase conf transfer
+                    return ()
+
         -- I need another set of credentials for this test! :-(
         -- I need the credentials for coinbase.com (as well as exchange.coinbase.com)
         , testCase "get Coinbase (non-exchange) Accounts" $ do
@@ -196,5 +209,8 @@ run_getFills conf moid mpid = onSuccess conf (getFills moid mpid) "Failed to get
 run_getRealCoinbaseAccountList :: ExchangeConf -> IO String
 run_getRealCoinbaseAccountList conf = onSuccess conf getRealCoinbaseAccountList "Failed to get account list"
 
-run_sendToCoinbase :: ExchangeConf -> TransferToCoinbase -> IO ()
-run_sendToCoinbase conf transf = onSuccess conf (createTransfer transf) "Failed to transfer to main coinbase account"
+-- FIX ME! This fails if we try to transfer small amounts (e.g. 0.01 as that is `show`n as "1.0e-2" and does not pass validation.
+-- The proper way to fix it is to change the ToJSON instance of CoinScientific, but I'm not messing with that at this point as
+-- I belive volumes should not be expressed in terms of CoinScientific, but in `Volume`. This problem will also be fixed by that change.
+run_sendToCoinbase :: ExchangeConf -> TransferToCoinbase -> IO TransferId
+run_sendToCoinbase conf transf = fmap trId $ onSuccess conf (createTransfer transf) "Failed to transfer to main coinbase account"

@@ -139,10 +139,10 @@ signMessage signForExchange True meth p req = do
                            rBody <- pullBody $ requestBody req
                            let presign = CBS.concat [time, meth, CBS.pack p, rBody]
                                sign    = if signForExchange
-                                            then trace (show presign) $ Base64.encode         $ toBytes       (hmac (secret tok)                 presign :: HMAC SHA256)
-                                            else trace (show presign) $ digestToHexByteString $ hmacGetDigest (hmac (Base64.encode $ secret tok) presign :: HMAC SHA256)
+                                            then Base64.encode         $ toBytes       (hmac (secret tok)                 presign :: HMAC SHA256)
+                                            else digestToHexByteString $ hmacGetDigest (hmac (Base64.encode $ secret tok) presign :: HMAC SHA256)
 
-                           return $ trace (show sign) req
+                           return req
                                 { requestBody    = RequestBodyBS rBody
                                 , requestHeaders = requestHeaders req ++
                                        [ ("CB-ACCESS-KEY", key tok)

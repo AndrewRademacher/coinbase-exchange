@@ -17,6 +17,8 @@ module Coinbase.Exchange.Types
     , sandboxSocket
     , liveRest
     , liveSocket
+    , liveRealCoinbaseRest
+    , sandboxRealCoinbaseRest
 
     , Key
     , Secret
@@ -78,6 +80,14 @@ liveRest = "https://api.exchange.coinbase.com"
 
 liveSocket :: Endpoint
 liveSocket = "ws-feed.exchange.coinbase.com"
+
+-- Coinbase needs to provide real BTC transfers through the exchange API soon,
+-- making 2 API calls with 2 sets of authentication credentials is ridiculous.
+liveRealCoinbaseRest :: Endpoint
+liveRealCoinbaseRest = "https://api.coinbase.com"
+
+sandboxRealCoinbaseRest :: Endpoint
+sandboxRealCoinbaseRest = "https://api.sandbox.coinbase.com"
 
 -- Monad Stack
 

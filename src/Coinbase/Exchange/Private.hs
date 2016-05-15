@@ -17,6 +17,9 @@ module Coinbase.Exchange.Private
 
     , createTransfer
 
+    , getRealCoinbaseAccountList
+    , sendBitcoins
+
     , module Coinbase.Exchange.Types.Private
     ) where
 
@@ -84,5 +87,14 @@ getFills moid mpid = coinbaseGet True ("/fills?" ++ oid ++ "&" ++ pid) voidBody
 -- Transfers
 
 createTransfer :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-               => Transfer -> m ()
+               => TransferToCoinbase -> m ()
 createTransfer = coinbasePost True "/transfers" . Just
+
+getRealCoinbaseAccountList :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+               => m String
+getRealCoinbaseAccountList = realCoinbaseGet True "/v2/accounts" voidBody
+
+
+sendBitcoins :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+               => CoinbaseAccountId -> SendBitcoinReq -> m String
+sendBitcoins accountId = realCoinbasePost True ("/v2/accounts/" ++ show accountId ++ "/transactions")  . Just

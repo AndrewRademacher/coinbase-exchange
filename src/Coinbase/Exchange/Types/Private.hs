@@ -438,7 +438,7 @@ newtype TransferId = TransferId { unTransferId :: UUID }
 newtype CoinbaseAccountId = CoinbaseAccountId { unCoinbaseAccountId :: UUID }
     deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, FromJSON, ToJSON)
 
-data Transfer
+data TransferToCoinbase
     = Deposit
         { transAmount          :: Size
         , transCoinbaseAccount :: CoinbaseAccountId
@@ -449,8 +449,32 @@ data Transfer
         }
     deriving (Show, Data, Typeable, Generic)
 
-instance NFData Transfer
-instance ToJSON Transfer where
+instance NFData TransferToCoinbase
+instance ToJSON TransferToCoinbase where
     toJSON = genericToJSON coinbaseAesonOptions
-instance FromJSON Transfer where
+instance FromJSON TransferToCoinbase where
     parseJSON = genericParseJSON coinbaseAesonOptions
+
+---------------------------
+
+data BitcoinWallet = Wallet { address :: String } deriving (Show, Data, Typeable, Generic)
+instance NFData BitcoinWallet
+
+data SendBitcoinReq
+    = SendBitcoin
+        { sendAmount    :: Size
+        , bitcoinWallet :: BitcoinWallet
+        }
+    deriving (Show, Data, Typeable, Generic)
+
+instance NFData SendBitcoinReq
+instance ToJSON SendBitcoinReq where
+    toJSON SendBitcoin {..} = object
+        [ "type"     .= ("send" :: Text)
+        , "currency" .= ("BTC"  :: Text)
+        , "to"       .= address bitcoinWallet
+        , "amount"   .= sendAmount
+        ]
+
+data BitcoinTransaction = BTCTransaction { hash :: String } deriving (Show, Data, Typeable, Generic)
+instance NFData BitcoinTransaction

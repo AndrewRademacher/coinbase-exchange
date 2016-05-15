@@ -26,6 +26,11 @@ import           Coinbase.Exchange.Types
 import           Coinbase.Exchange.Types.Core
 import           Coinbase.Exchange.Types.Private
 
+import           Network.HTTP.Client.TLS
+import           Network.HTTP.Conduit
+import           System.Environment
+import qualified Data.ByteString.Char8             as CBS
+
 deriving instance Eq Order
 
 -- NOTE: [Fills in Sandbox]
@@ -103,6 +108,22 @@ tests conf = testGroup "Private"
                                                            [] -> assertFailure "No fills found for an order that should execute immediately"
                                                            _  -> return ()
                                         )
+        -- I need another set of credentials for this test! :-(
+        -- I need the credentials for coinbase.com (as well as exchange.coinbase.com)
+        , testCase "get Coinbase (non-exchange) Accounts" $ do
+
+            mgr     <- newManager tlsManagerSettings
+            tKey    <- liftM CBS.pack $ getEnv "COINBASE_KEY_REAL"
+            tSecret <- liftM CBS.pack $ getEnv "COINBASE_SECRET_REAL"
+            let liveOrSandBox  = apiType conf
+                conf2 = case mkToken tKey tSecret "" of
+                    Right tok -> ExchangeConf mgr (Just tok) liveOrSandBox
+                    Left   er -> error $ show er
+
+            accounts <- run_getRealCoinbaseAccountList conf2
+            putStrLn $ "COINBASE ACCOUNTS: " ++ accounts
+            -- run_sendToCoinbase conf (Withdraw 0.04 (undefined))
+
         ]
 
 -----------------------------------------------
@@ -171,3 +192,9 @@ run_cancelOrder conf oid = onSuccess conf (cancelOrder oid) "Failed to cancel or
 
 run_getFills :: ExchangeConf -> Maybe OrderId -> Maybe ProductId -> IO [Fill]
 run_getFills conf moid mpid = onSuccess conf (getFills moid mpid) "Failed to get fills"
+
+run_getRealCoinbaseAccountList :: ExchangeConf -> IO String
+run_getRealCoinbaseAccountList conf = onSuccess conf getRealCoinbaseAccountList "Failed to get account list"
+
+run_sendToCoinbase :: ExchangeConf -> TransferToCoinbase -> IO ()
+run_sendToCoinbase conf transf = onSuccess conf (createTransfer transf) "Failed to transfer to main coinbase account"

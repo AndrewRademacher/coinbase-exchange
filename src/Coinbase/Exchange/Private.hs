@@ -92,9 +92,9 @@ createTransfer = coinbasePost True "/transfers" . Just
 
 getRealCoinbaseAccountList :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                => m String
-getRealCoinbaseAccountList = realCoinbaseGet True "/v2/accounts" voidBody
+getRealCoinbaseAccountList = realCoinbaseGet True "/v2/accounts" voidBody -- FIX ME! This is TO DO.
 
 
 sendBitcoins :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-               => CoinbaseAccountId -> SendBitcoinReq -> m String
-sendBitcoins accountId = realCoinbasePost True ("/v2/accounts/" ++ show accountId ++ "/transactions")  . Just
+               => CoinbaseAccountId -> BTCTransferReq -> m BTCTransferResponse
+sendBitcoins accountId = realCoinbasePost True ("/v2/accounts/" ++ show (unCoinbaseAccountId accountId) ++ "/transactions")  . Just

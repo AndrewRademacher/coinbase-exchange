@@ -471,15 +471,15 @@ instance FromJSON TransferToCoinbaseResponse where
 data BitcoinWallet = Wallet { address :: String } deriving (Show, Data, Typeable, Generic)
 instance NFData BitcoinWallet
 
-data SendBitcoinReq
+data BTCTransferReq
     = SendBitcoin
         { sendAmount    :: Size
         , bitcoinWallet :: BitcoinWallet
         }
     deriving (Show, Data, Typeable, Generic)
 
-instance NFData SendBitcoinReq
-instance ToJSON SendBitcoinReq where
+instance NFData BTCTransferReq
+instance ToJSON BTCTransferReq where
     toJSON SendBitcoin {..} = object
         [ "type"     .= ("send" :: Text)
         , "currency" .= ("BTC"  :: Text)
@@ -487,5 +487,20 @@ instance ToJSON SendBitcoinReq where
         , "amount"   .= sendAmount
         ]
 
-data BitcoinTransaction = BTCTransaction { hash :: String } deriving (Show, Data, Typeable, Generic)
-instance NFData BitcoinTransaction
+---------------------------
+newtype BTCTransferId = BTCTransferId { getBtcTransferId :: UUID }
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, FromJSON, ToJSON)
+
+data BTCTransferResponse = BTCTransferResponse
+        { sendId :: BTCTransferId
+        -- FIX ME! and other stuff I'm going to ignore.
+        } deriving (Eq, Data, Show, Generic, Typeable)
+
+instance NFData BTCTransferResponse
+instance FromJSON BTCTransferResponse where
+    parseJSON (Object m) = do
+        transferData <- m .:? "data"
+        case transferData of
+            Nothing -> mzero
+            Just da -> BTCTransferResponse <$> da .: "id"
+    parseJSON _ = mzero

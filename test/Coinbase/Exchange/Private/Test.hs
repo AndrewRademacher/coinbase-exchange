@@ -162,7 +162,7 @@ tests conf = testGroup "Private"
                     }
 
             transf <- run_sendBitcoins conf2 (CoinbaseAccountId $ fromJust $ fromString btcAccount) remittance
-            print transf
+            return ()
 
         --------------------------------------------------------------------------------
         -- This test puts the previous 2 together;
@@ -193,7 +193,7 @@ tests conf = testGroup "Private"
                     trsId <- run_sendToCoinbase conf transfer
                     threadDelay (1*1000*1000) -- This 1 second value is arbitrary, but Coinbase apparenty requires a small delay.
                     transf <- run_sendBitcoins conf2 (CoinbaseAccountId $ fromJust $ fromString btcAccount) remittance
-                    print (trsId,transf)
+                    return ()
         --------------------------------------------------------------------------------
 
         ]

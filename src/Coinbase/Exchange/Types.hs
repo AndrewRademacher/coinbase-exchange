@@ -65,19 +65,19 @@ type Endpoint = String
 type Path     = String
 
 website :: Endpoint
-website = "https://public.sandbox.exchange.coinbase.com"
+website = "https://public.sandbox.gdax.com"
 
 sandboxRest :: Endpoint
-sandboxRest = "https://api-public.sandbox.exchange.coinbase.com"
+sandboxRest = "https://api-public.sandbox.gdax.com"
 
 sandboxSocket :: Endpoint
-sandboxSocket = "ws-feed-public.sandbox.exchange.coinbase.com"
+sandboxSocket = "ws-feed-public.sandbox.gdax.com"
 
 liveRest :: Endpoint
-liveRest = "https://api.exchange.coinbase.com"
+liveRest = "https://api.gdax.com"
 
 liveSocket :: Endpoint
-liveSocket = "ws-feed.exchange.coinbase.com"
+liveSocket = "ws-feed.gdax.com"
 
 -- Monad Stack
 

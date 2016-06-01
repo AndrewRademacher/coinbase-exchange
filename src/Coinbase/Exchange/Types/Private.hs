@@ -140,6 +140,7 @@ instance FromJSON Hold where
 -- Orders
 data OrderContigency
     = GoodTillCanceled
+    | GoodTillTime
     | ImmediateOrCancel
     | FillOrKill
     deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
@@ -149,12 +150,33 @@ instance Hashable OrderContigency
 
 instance ToJSON OrderContigency where
     toJSON GoodTillCanceled  = String "GTC"
+    toJSON GoodTillTime      = String "GTT"
     toJSON ImmediateOrCancel = String "IOC"
     toJSON FillOrKill        = String "FOK"
 instance FromJSON OrderContigency where
     parseJSON (String "GTC") = return GoodTillCanceled
+    parseJSON (String "GTT") = return GoodTillTime
     parseJSON (String "IOC") = return ImmediateOrCancel
     parseJSON (String "FOK") = return FillOrKill
+    parseJSON _ = mzero
+
+data OrderCancelAfter
+    = Min
+    | Hour
+    | Day
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
+
+instance NFData   OrderCancelAfter
+instance Hashable OrderCancelAfter
+
+instance ToJSON OrderCancelAfter where
+    toJSON Min                  = String "min"
+    toJSON Hour                 = String "hour"
+    toJSON Day                  = String "day"
+instance FromJSON OrderCancelAfter where
+    parseJSON (String "min")    = return Min
+    parseJSON (String "hour")   = return Hour
+    parseJSON (String "day")    = return Day
     parseJSON _ = mzero
 
 data SelfTrade
@@ -188,6 +210,7 @@ data NewOrder
         , noPrice     :: Price
         , noSize      :: Size
         ,noTimeInForce:: OrderContigency
+        ,noCancelAfter:: Maybe OrderCancelAfter
         , noPostOnly  :: Bool
         }
     | NewMarketOrder
@@ -196,6 +219,15 @@ data NewOrder
         , noSelfTrade :: SelfTrade
         , noClientOid :: Maybe ClientOrderId
         ---
+        , noSizeAndOrFunds  :: Either Size (Maybe Size, Cost)
+        }
+    | NewStopOrder
+        { noProductId :: ProductId
+        , noSide      :: Side
+        , noSelfTrade :: SelfTrade
+        , noClientOid :: Maybe ClientOrderId
+        ---
+        , noPrice     :: Price
         , noSizeAndOrFunds  :: Either Size (Maybe Size, Cost)
         }
     deriving (Show, Data, Typeable, Generic)
@@ -211,17 +243,37 @@ instance ToJSON NewOrder where
             , "size"          .= noSize
             , "time_in_force" .= noTimeInForce
             , "post_only"     .= noPostOnly
-            ] ++ clientID )
+            ] ++ clientID ++ cancelAfter )
             where
                 clientID = case noClientOid of
                                 Just cid -> [ "client_oid" .= cid ]
                                 Nothing  -> []
+                cancelAfter = case noCancelAfter of
+                                   Just time -> [ "cancel_after" .= time ]
+                                   Nothing   -> []
 
         toJSON NewMarketOrder{..} = object
            ([ "type" .= ("market" :: Text)
             , "product_id"    .= noProductId
             , "side"          .= noSide
             , "stp"           .= noSelfTrade
+            ] ++ clientID ++ size ++ funds )
+            where
+                clientID = case noClientOid of
+                                Just cid -> [ "client_oid" .= cid ]
+                                Nothing  -> []
+                (size,funds) = case noSizeAndOrFunds of
+                                Left  s -> (["size" .= s],[])
+                                Right (ms,f) -> case ms of
+                                            Nothing -> ( []            , ["funds" .= f] )
+                                            Just s' -> ( ["size" .= s'], ["funds" .= f] )
+
+        toJSON NewStopOrder{..} = object
+           ([ "type" .= ("stop" :: Text)
+            , "product_id"    .= noProductId
+            , "side"          .= noSide
+            , "stp"           .= noSelfTrade
+            , "price"         .= noPrice
             ] ++ clientID ++ size ++ funds )
             where
                 clientID = case noClientOid of
@@ -263,6 +315,7 @@ data Order
         , orderPrice      :: Price
         , orderSize       :: Size
         , orderTimeInForce:: OrderContigency
+        , orderCancelAfter:: Maybe OrderCancelAfter
         , orderPostOnly   :: Bool
         }
     | MarketOrder
@@ -278,6 +331,22 @@ data Order
         , orderDoneAt     :: Maybe UTCTime
         , orderDoneReason :: Maybe Reason
 
+        , orderSizeAndOrFunds  :: Either Size (Maybe Size, Cost)
+        }
+    | StopOrder
+        { orderId         :: OrderId
+        , orderProductId  :: ProductId
+        , orderStatus     :: OrderStatus
+        , orderSelfTrade  :: SelfTrade
+        , orderSettled    :: Bool
+        , orderSide       :: Side
+        , orderCreatedAt  :: UTCTime
+        , orderFilledSize :: Maybe Size
+        , orderFilledFees :: Maybe Price
+        , orderDoneAt     :: Maybe UTCTime
+        , orderDoneReason :: Maybe Reason
+
+        , orderPrice      :: Price
         , orderSizeAndOrFunds  :: Either Size (Maybe Size, Cost)
         }
     deriving (Show, Data, Typeable, Generic)
@@ -301,6 +370,7 @@ instance ToJSON Order where
         , "price"         .= orderPrice
         , "size"          .= orderSize
         , "time_in_force" .= orderTimeInForce
+        , "cancel_after"  .= orderCancelAfter
         , "post_only"     .= orderPostOnly
         ]
     toJSON MarketOrder{..} = object
@@ -316,6 +386,27 @@ instance ToJSON Order where
         , "filled_fees"   .= orderFilledFees
         , "done_at"       .= orderDoneAt
         , "done_reason"   .= orderDoneReason
+        ] ++ size ++ funds )
+            where (size,funds) = case orderSizeAndOrFunds of
+                        Left  s -> (["size" .= s],[])
+                        Right (ms,f) -> case ms of
+                                    Nothing -> ( []            , ["funds" .= f] )
+                                    Just s' -> ( ["size" .= s'], ["funds" .= f] )
+    toJSON StopOrder{..} = object
+       ([ "type" .= ("market" :: Text)
+        , "id"            .= orderId
+        , "product_id"    .= orderProductId
+        , "status"        .= orderStatus
+        , "stp"           .= orderSelfTrade
+        , "settled"       .= orderSettled
+        , "side"          .= orderSide
+        , "created_at"    .= orderCreatedAt
+        , "filled_size"   .= orderFilledSize
+        , "filled_fees"   .= orderFilledFees
+        , "done_at"       .= orderDoneAt
+        , "done_reason"   .= orderDoneReason
+
+        , "price"         .= orderPrice
         ] ++ size ++ funds )
             where (size,funds) = case orderSizeAndOrFunds of
                         Left  s -> (["size" .= s],[])
@@ -343,6 +434,7 @@ instance FromJSON Order where
                 <*> m .: "price"
                 <*> m .: "size"
                 <*> m .:? "time_in_force" .!= GoodTillCanceled -- older orders don't seem to have this field
+                <*> m .:? "cancel_after"
                 <*> m .: "post_only"
 
             "market" -> MarketOrder
@@ -357,6 +449,29 @@ instance FromJSON Order where
                 <*> m .:? "filled_fees"
                 <*> m .:? "done_at"
                 <*> m .:? "done_reason"
+                <*> (do
+                        ms <- m .:? "size"
+                        mf <- m .:? "funds"
+                        case (ms,mf) of
+                            (Nothing, Nothing) -> mzero
+                            (Just s , Nothing) -> return $ Left  s
+                            (Nothing, Just f ) -> return $ Right (Nothing, f)
+                            (Just s , Just f ) -> return $ Right (Just s , f)
+                            )
+
+            "stop" -> StopOrder
+                <$> m .: "id"
+                <*> m .: "product_id"
+                <*> m .: "status"
+                <*> m .: "stp"
+                <*> m .: "settled"
+                <*> m .: "side"
+                <*> m .: "created_at"
+                <*> m .:? "filled_size"
+                <*> m .:? "filled_fees"
+                <*> m .:? "done_at"
+                <*> m .:? "done_reason"
+                <*> m .: "price"
                 <*> (do
                         ms <- m .:? "size"
                         mf <- m .:? "funds"

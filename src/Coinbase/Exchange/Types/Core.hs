@@ -94,6 +94,7 @@ data OrderStatus
     | Settled
     | Open
     | Pending
+    | Active
     deriving (Eq, Show, Read, Data, Typeable, Generic)
 
 instance NFData OrderStatus

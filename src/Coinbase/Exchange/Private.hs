@@ -10,6 +10,7 @@ module Coinbase.Exchange.Private
 
     , createOrder
     , cancelOrder
+    , cancelAllOrders
     , getOrderList
     , getOrder
 
@@ -59,12 +60,18 @@ createOrder = liftM ocId . coinbasePost True "/orders" . Just
 
 cancelOrder :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
             => OrderId -> m ()
-cancelOrder (OrderId o) = coinbaseDelete True ("/orders/" ++ toString o) voidBody
+cancelOrder (OrderId o) = coinbaseDeleteDiscardBody True ("/orders/" ++ toString o) voidBody
+
+cancelAllOrders :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+                => Maybe ProductId -> m [OrderId]
+cancelAllOrders prodId = coinbaseDelete True ("/orders" ++ opt prodId) voidBody
+    where opt Nothing   = ""
+          opt (Just id) = "?product_id=" ++ T.unpack (unProductId id)
 
 getOrderList :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
              => [OrderStatus] -> m [Order]
 getOrderList os = coinbaseGet True ("/orders?" ++ query os) voidBody
-    where query [] = "status=all"
+    where query [] = "status=open&status=pending&status=active"
           query xs = intercalate "&" $ map (\x -> "status=" ++ map toLower (show x)) xs
 
 getOrder :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)

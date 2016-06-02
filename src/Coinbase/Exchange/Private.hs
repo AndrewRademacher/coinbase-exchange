@@ -18,6 +18,9 @@ module Coinbase.Exchange.Private
 
     , createTransfer
 
+    , createReport
+    , getReportStatus
+
     , module Coinbase.Exchange.Types.Private
     ) where
 
@@ -93,3 +96,13 @@ getFills moid mpid = coinbaseGet True ("/fills?" ++ oid ++ "&" ++ pid) voidBody
 createTransfer :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                => Transfer -> m ()
 createTransfer = coinbasePost True "/transfers" . Just
+
+-- Reports
+
+createReport :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+             => ReportRequest -> m ReportInfo
+createReport = coinbasePost True "/reports" . Just
+
+getReportStatus :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+             => ReportId -> m ReportInfo
+getReportStatus (ReportId r) = coinbaseGet True ("/reports/" ++ toString r) voidBody

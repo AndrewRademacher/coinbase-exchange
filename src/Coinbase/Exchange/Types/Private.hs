@@ -569,3 +569,134 @@ instance ToJSON Transfer where
     toJSON = genericToJSON coinbaseAesonOptions
 instance FromJSON Transfer where
     parseJSON = genericParseJSON coinbaseAesonOptions
+
+ -- Reports
+
+newtype ReportId = ReportId { unReportId :: UUID }
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, FromJSON, ToJSON)
+
+data ReportType
+    = FillsReport
+    | AccountReport
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
+
+instance NFData   ReportType
+instance Hashable ReportType
+
+instance ToJSON ReportType where
+    toJSON FillsReport                = String "fills"
+    toJSON AccountReport              = String "account"
+instance FromJSON ReportType where
+    parseJSON (String "fills")   = return FillsReport
+    parseJSON (String "account") = return AccountReport
+    parseJSON _ = mzero
+
+data ReportFormat
+    = PDF
+    | CSV
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
+
+instance NFData   ReportFormat
+instance Hashable ReportFormat
+
+instance ToJSON ReportFormat where
+    toJSON PDF                  = String "pdf"
+    toJSON CSV                  = String "csv"
+instance FromJSON ReportFormat where
+    parseJSON (String "pdf")    = return PDF
+    parseJSON (String "csv")    = return CSV
+    parseJSON _ = mzero
+
+data ReportRequest -- analgous to Transfer or NewOrder
+    = ReportRequest
+        { rrqType            :: ReportType
+        , rrqStartDate       :: UTCTime
+        , rrqEndDate         :: UTCTime
+        , rrqProductId       :: ProductId
+        , rrqAccountId       :: AccountId
+        , rrqFormat          :: ReportFormat
+        , rrqEmail           :: Maybe String
+        }
+    deriving (Show, Data, Typeable, Generic)
+
+instance NFData ReportRequest
+instance ToJSON ReportRequest where
+    toJSON = genericToJSON coinbaseAesonOptions
+instance FromJSON ReportRequest where
+    parseJSON = genericParseJSON coinbaseAesonOptions
+
+data ReportParams
+    = ReportParams
+        { reportStartDate       :: UTCTime
+        , reportEndDate         :: UTCTime
+        }
+    deriving (Show, Data, Typeable, Generic)
+
+instance NFData ReportParams
+instance ToJSON ReportParams where
+    toJSON ReportParams{..} = object
+       ([ "start_date"        .= reportStartDate
+        , "end_date"          .= reportEndDate
+        ])
+instance FromJSON ReportParams where
+    parseJSON (Object m) = ReportParams
+            <$> m .:  "start_date"
+            <*> m .:  "end_date"
+    parseJSON _ = mzero
+
+data ReportStatus
+    = ReportPending
+    | ReportCreating
+    | ReportReady
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
+
+instance NFData   ReportStatus
+instance Hashable ReportStatus
+
+instance ToJSON ReportStatus where
+    toJSON ReportPending        = String "pending"
+    toJSON ReportCreating       = String "creating"
+    toJSON ReportReady          = String "ready"
+instance FromJSON ReportStatus where
+    parseJSON (String "pending")    = return ReportPending
+    parseJSON (String "creating")   = return ReportCreating
+    parseJSON (String "ready")      = return ReportReady
+    parseJSON _ = mzero
+
+data ReportInfo
+    = ReportInfo
+        { reportId          :: ReportId
+        , reportType        :: ReportType
+        , reportStatus      :: ReportStatus
+        , reportCreated     :: Maybe UTCTime
+        , reportCompleted   :: Maybe UTCTime
+        , reportExpires     :: Maybe UTCTime
+        , reportUrl         :: Maybe String
+        , reportParams      :: Maybe ReportParams
+        }
+    deriving (Show, Data, Typeable, Generic)
+
+instance NFData ReportInfo
+instance ToJSON ReportInfo where
+    toJSON ReportInfo{..} = object
+       ([ "id"            .= reportId
+        , "type"          .= reportType
+        , "status"        .= reportStatus
+        , "created_at"    .= reportCreated
+        , "completed_at"  .= reportCompleted
+        , "expires_at"    .= reportExpires
+        , "file_url"      .= reportUrl
+        , "params"        .= reportParams
+        ])
+
+instance FromJSON ReportInfo where
+    parseJSON (Object m) = ReportInfo
+            <$> m .:  "id"
+            <*> m .:  "type"
+            <*> m .:  "status"
+            <*> m .:? "created_at"
+            <*> m .:? "completed_at"
+            <*> m .:? "expires_at"
+            <*> m .:? "file_url"
+            <*> m .:? "params"
+    parseJSON _ = mzero

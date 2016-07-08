@@ -508,7 +508,7 @@ instance FromJSON BTCTransferResponse where
 ---------------------------
 data CoinbaseAccount =
     CoinbaseAccount
-        { cbAccID      :: AccountId
+        { cbAccID      :: CoinbaseAccountId
         , resourcePath :: String
         , primary      :: Bool
         , name         :: String

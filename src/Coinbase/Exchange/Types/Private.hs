@@ -499,8 +499,38 @@ data BTCTransferResponse = BTCTransferResponse
 instance NFData BTCTransferResponse
 instance FromJSON BTCTransferResponse where
     parseJSON (Object m) = do
-        transferData <- m .:? "data"
+        transferData <- m .:? "data" -- FIX ME! I should factor this out of all responses from Coinbase
         case transferData of
             Nothing -> mzero
             Just da -> BTCTransferResponse <$> da .: "id"
+    parseJSON _ = mzero
+
+---------------------------
+data CoinbaseAccount =
+    CoinbaseAccount
+        { cbAccID      :: AccountId
+        , resourcePath :: String
+        , primary      :: Bool
+        , name         :: String
+        , btcBalance   :: Size
+        }
+    deriving (Show, Data, Typeable, Generic)
+
+instance FromJSON CoinbaseAccount where
+    parseJSON (Object m) = do
+        transferData <- m .:? "data" -- FIX ME! I should factor this out of all responses from Coinbase
+        case transferData of
+            Nothing -> mzero
+            Just da -> CoinbaseAccount
+                <$> da .: "id"
+                <*> da .: "resource_path"
+                <*> da .: "primary"
+                <*> da .: "name"
+                <*> (do
+                        btcBalance <- da .: "balance"
+                        case btcBalance of
+                            Object b -> b .: "amount"
+                            _        -> mzero
+                    )
+
     parseJSON _ = mzero

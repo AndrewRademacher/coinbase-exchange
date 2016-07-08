@@ -141,6 +141,34 @@ tests conf = testGroup "Private"
                     run_sendToCoinbase conf transfer
                     return ()
 
+        -- -----------------------------------------
+        -- This test cause a "403 Forbiden" error when run in the Sanbox. I'm not sure that can be fixed on my end.
+        -- FIX ME! This fails if we try to transfer small amounts (e.g. 0.01 as that is `show`n as "1.0e-2" and does not pass validation).
+        , testCase "deposit BTCs from Coinbase" $
+            case apiType conf of
+                Sandbox -> assertFailure "Running in Sanboxes environment. ** This test always fails - Is it not implemented by Coinbase? **"
+                Live -> do
+                    btcAccount <- getEnv "COINBASE_BTC_ACCOUNT_REAL"
+                    let transfer = Deposit
+                            { trAmount            = 0.1  -- There must be this many BTCs there for this to work!
+                            , trCoinbaseAccountId = CoinbaseAccountId $ fromJust $ fromString btcAccount}
+                    run_sendToCoinbase conf transfer
+                    return ()
+
+        ---------------------------------------------
+        , testCase "get Coinbase (non-exchange) BTC account info" $ do
+
+            mgr     <- newManager tlsManagerSettings
+            tKey    <- liftM CBS.pack $ getEnv "COINBASE_KEY_REAL"
+            tSecret <- liftM CBS.pack $ getEnv "COINBASE_SECRET_REAL"
+            realCoinbaseAccount <- getEnv "COINBASE_BTC_ACCOUNT_REAL"
+            let liveOrSandBox  = apiType conf
+                conf2 = case mkToken tKey tSecret "" of
+                    Right tok -> ExchangeConf mgr (Just tok) liveOrSandBox
+                    Left   er -> error $ show er
+
+            info <- run_getPrimaryCoinbaseAccountInfo conf2
+            putStrLn $ "COINBASE ACCOUNT INFO: " ++ show info
 
         -----------------------------------------
         -- CAREFULL ON LIVE ENVIRONMENT!!! TRANSFERS ARE IRREVERSIBLE!!!
@@ -281,3 +309,6 @@ run_sendBitcoins conf acc req = onSuccess conf (sendBitcoins acc req) "Failed to
 
 run_getRealCoinbaseAccountList :: ExchangeConf -> IO String
 run_getRealCoinbaseAccountList conf = onSuccess conf getRealCoinbaseAccountList "Failed to get account list"
+
+run_getPrimaryCoinbaseAccountInfo :: ExchangeConf -> IO CoinbaseAccount
+run_getPrimaryCoinbaseAccountInfo conf = onSuccess conf getPrimaryCoinbaseAccountInfo "Failed to primary account info"

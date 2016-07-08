@@ -18,6 +18,7 @@ module Coinbase.Exchange.Private
     , createTransfer
 
     , getRealCoinbaseAccountList
+    , getPrimaryCoinbaseAccountInfo
     , sendBitcoins
 
     , module Coinbase.Exchange.Types.Private
@@ -94,6 +95,9 @@ getRealCoinbaseAccountList :: (MonadResource m, MonadReader ExchangeConf m, Mona
                => m String
 getRealCoinbaseAccountList = realCoinbaseGet True "/v2/accounts" voidBody -- FIX ME! This is TO DO.
 
+getPrimaryCoinbaseAccountInfo :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+               => m CoinbaseAccount
+getPrimaryCoinbaseAccountInfo = realCoinbaseGet True "/v2/accounts/primary" voidBody
 
 sendBitcoins :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                => CoinbaseAccountId -> BTCTransferReq -> m BTCTransferResponse

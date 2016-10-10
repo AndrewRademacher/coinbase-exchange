@@ -72,7 +72,7 @@ data ExchangeMessage
         , msgOrderId   :: OrderId
         , msgSide      :: Side
         , msgRemainingSize :: Size
-        , msgPrice     :: Price
+        , msgMaybePrice:: Maybe Price
         , msgReason    :: Reason
         }
     | DoneMarket
@@ -132,7 +132,7 @@ instance FromJSON ExchangeMessage where
                         <*> m .: "order_id"
                         <*> m .: "side"
                         <*> m .: "remaining_size"
-                        <*> m .: "price"
+                        <*> m .:? "price"
                         <*> m .: "reason"
                     Market -> DoneMarket
                         <$> m .: "time"
@@ -233,17 +233,22 @@ instance ToJSON ExchangeMessage where
         , "price"      .= msgPrice
         ]
     toJSON DoneLimit{..} = object
-        [ "type"       .= ("done" :: Text)
+        ([ "type"       .= ("done" :: Text)
         , "time"       .= msgTime
         , "product_id" .= msgProductId
         , "sequence"   .= msgSequence
         , "order_id"   .= msgOrderId
         , "side"       .= msgSide
         , "remaining_size" .= msgRemainingSize
-        , "price"      .= msgPrice
+        -- , "price"      .= msgPrice
         , "reason"     .= msgReason
         , "order_type" .= Limit
         ]
+        ++  case msgMaybePrice of
+                    Nothing -> []
+                    Just p  -> ["price" .= p ]
+        )
+
     toJSON DoneMarket{..} = object
         [ "type"       .= ("done" :: Text)
         , "time"       .= msgTime

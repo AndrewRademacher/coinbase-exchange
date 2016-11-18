@@ -4,10 +4,6 @@ packages:
 - '.'
 
 extra-deps:
-- aeson-casing-0.1.0.2
 - uuid-aeson-0.1.0.0
-- wuss-1.0.2
-- aeson-0.10.0.0
-- attoparsec-0.13.0.1
 
-resolver: lts-3.8
+resolver: lts-6.25

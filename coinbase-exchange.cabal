@@ -28,20 +28,20 @@ library
 
     other-modules:      Coinbase.Exchange.Rest
 
-    build-depends:      base                ==4.*
-                    ,   mtl                 >=2.2
+    build-depends:      base
+                    ,   mtl
                     ,   resourcet
                     ,   transformers-base
                     ,   conduit
                     ,   conduit-extra
                     ,   http-conduit
-                    ,   aeson               >=0.10.0
+                    ,   aeson
                     ,   aeson-casing
                     ,   http-types
                     ,   text
                     ,   bytestring
                     ,   base64-bytestring
-                    ,   time                >=1.5
+                    ,   time
                     ,   scientific
                     ,   uuid
                     ,   uuid-aeson
@@ -63,13 +63,13 @@ executable sandbox
     hs-source-dirs:     sbox
     default-language:   Haskell2010
 
-    build-depends:      base                ==4.*
+    build-depends:      base
                     ,   http-client
                     ,   http-client-tls
 
                     ,   uuid
                     ,   text
-                    ,   aeson               >=0.10.0
+                    ,   aeson
                     ,   bytestring
                     ,   time
                     ,   old-locale
@@ -93,7 +93,11 @@ test-suite test-coinbase
     ghc-options:        -threaded
     default-language:   Haskell2010
 
-    build-depends:      base                ==4.*
+    other-modules:      Coinbase.Exchange.MarketData.Test
+                        Coinbase.Exchange.Private.Test
+                        Coinbase.Exchange.Socket.Test
+
+    build-depends:      base
                     ,   tasty
                     ,   tasty-th
                     ,   tasty-quickcheck
@@ -110,7 +114,7 @@ test-suite test-coinbase
                     ,   scientific
                     ,   async
                     ,   websockets
-                    ,   aeson               >=0.10.0
+                    ,   aeson
                     ,   unordered-containers
 
                     ,   coinbase-exchange

@@ -20,8 +20,14 @@ main = do
         tSecret <- liftM CBS.pack $ getEnv "COINBASE_SECRET"
         tPass   <- liftM CBS.pack $ getEnv "COINBASE_PASSPHRASE"
 
+        sbox    <- getEnv "COINBASE_SANDBOX"
+        let apiType  = case sbox of
+                        "FALSE" -> Live
+                        "TRUE"  -> Sandbox
+                        _       -> error "Coinbase sandbox option must be either: TRUE or FALSE (all caps)"
+
         case mkToken tKey tSecret tPass of
-            Right tok -> defaultMain (tests $ ExchangeConf mgr (Just tok) Live)
+            Right tok -> defaultMain (tests $ ExchangeConf mgr (Just tok) apiType)
             Left   er -> error $ show er
 
 tests :: ExchangeConf -> TestTree

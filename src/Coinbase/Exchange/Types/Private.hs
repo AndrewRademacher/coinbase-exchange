@@ -438,19 +438,99 @@ newtype TransferId = TransferId { unTransferId :: UUID }
 newtype CoinbaseAccountId = CoinbaseAccountId { unCoinbaseAccountId :: UUID }
     deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, FromJSON, ToJSON)
 
-data Transfer
+data TransferToCoinbase
     = Deposit
-        { transAmount          :: Size
-        , transCoinbaseAccount :: CoinbaseAccountId
+        { trAmount            :: Size
+        , trCoinbaseAccountId :: CoinbaseAccountId
         }
     | Withdraw
-        { transAmount          :: Size
-        , transCoinbaseAccount :: CoinbaseAccountId
+        { trAmount            :: Size
+        , trCoinbaseAccountId :: CoinbaseAccountId
         }
     deriving (Show, Data, Typeable, Generic)
 
-instance NFData Transfer
-instance ToJSON Transfer where
+instance NFData TransferToCoinbase
+instance ToJSON TransferToCoinbase where
     toJSON = genericToJSON coinbaseAesonOptions
-instance FromJSON Transfer where
-    parseJSON = genericParseJSON coinbaseAesonOptions
+
+---------------------------
+data TransferToCoinbaseResponse
+    = TransferResponse
+        { trId :: TransferId
+        -- FIX ME! and other stuff I'm going to ignore.
+        } deriving (Eq, Show, Generic, Typeable)
+
+instance NFData   TransferToCoinbaseResponse
+instance FromJSON TransferToCoinbaseResponse where
+    parseJSON (Object m) = TransferResponse
+        <$> m .: "id"
+    parseJSON _ = mzero
+
+---------------------------
+
+data BitcoinWallet = Wallet { address :: String } deriving (Show, Data, Typeable, Generic)
+instance NFData BitcoinWallet
+
+data BTCTransferReq
+    = SendBitcoin
+        { sendAmount    :: Size
+        , bitcoinWallet :: BitcoinWallet
+        }
+    deriving (Show, Data, Typeable, Generic)
+
+instance NFData BTCTransferReq
+instance ToJSON BTCTransferReq where
+    toJSON SendBitcoin {..} = object
+        [ "type"     .= ("send" :: Text)
+        , "currency" .= ("BTC"  :: Text)
+        , "to"       .= address bitcoinWallet
+        , "amount"   .= sendAmount
+        ]
+
+---------------------------
+newtype BTCTransferId = BTCTransferId { getBtcTransferId :: UUID }
+    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, FromJSON, ToJSON)
+
+data BTCTransferResponse = BTCTransferResponse
+        { sendId :: BTCTransferId
+        -- FIX ME! and other stuff I'm going to ignore.
+        } deriving (Eq, Data, Show, Generic, Typeable)
+
+instance NFData BTCTransferResponse
+instance FromJSON BTCTransferResponse where
+    parseJSON (Object m) = do
+        transferData <- m .:? "data" -- FIX ME! I should factor this out of all responses from Coinbase
+        case transferData of
+            Nothing -> mzero
+            Just da -> BTCTransferResponse <$> da .: "id"
+    parseJSON _ = mzero
+
+---------------------------
+data CoinbaseAccount =
+    CoinbaseAccount
+        { cbAccID      :: CoinbaseAccountId
+        , resourcePath :: String
+        , primary      :: Bool
+        , name         :: String
+        , btcBalance   :: Size
+        }
+    deriving (Show, Data, Typeable, Generic)
+
+instance FromJSON CoinbaseAccount where
+    parseJSON (Object m) = do
+        transferData <- m .:? "data" -- FIX ME! I should factor this out of all responses from Coinbase
+        case transferData of
+            Nothing -> mzero
+            Just da -> CoinbaseAccount
+                <$> da .: "id"
+                <*> da .: "resource_path"
+                <*> da .: "primary"
+                <*> da .: "name"
+                <*> (do
+                        btcBalance <- da .: "balance"
+                        case btcBalance of
+                            Object b -> b .: "amount"
+                            _        -> mzero
+                    )
+
+    parseJSON _ = mzero

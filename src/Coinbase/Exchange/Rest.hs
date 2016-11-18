@@ -6,6 +6,8 @@ module Coinbase.Exchange.Rest
     ( coinbaseGet
     , coinbasePost
     , coinbaseDelete
+    , realCoinbaseGet
+    , realCoinbasePost
     , voidBody
     ) where
 
@@ -32,9 +34,10 @@ import           Text.Printf
 
 import           Coinbase.Exchange.Types
 
--- import Debug.Trace
+import Debug.Trace
 
 type Signed = Bool
+type IsForExchange = Bool
 
 voidBody :: Maybe ()
 voidBody = Nothing
@@ -45,7 +48,7 @@ coinbaseGet :: ( ToJSON a
                , MonadReader ExchangeConf m
                , MonadError ExchangeFailure m )
             => Signed -> Path -> Maybe a -> m b
-coinbaseGet sgn p ma = coinbaseRequest "GET" sgn p ma >>= processResponse
+coinbaseGet sgn p ma = coinbaseRequest "GET" sgn p ma >>= processResponse True
 
 coinbasePost :: ( ToJSON a
                 , FromJSON b
@@ -53,7 +56,7 @@ coinbasePost :: ( ToJSON a
                 , MonadReader ExchangeConf m
                 , MonadError ExchangeFailure m )
              => Signed -> Path -> Maybe a -> m b
-coinbasePost sgn p ma = coinbaseRequest "POST" sgn p ma >>= processResponse
+coinbasePost sgn p ma = coinbaseRequest "POST" sgn p ma >>= processResponse True
 
 coinbaseDelete :: ( ToJSON a
                   , MonadResource m
@@ -61,6 +64,23 @@ coinbaseDelete :: ( ToJSON a
                   , MonadError ExchangeFailure m )
                => Signed -> Path -> Maybe a -> m ()
 coinbaseDelete sgn p ma = coinbaseRequest "DELETE" sgn p ma >>= processEmpty
+
+realCoinbaseGet ::  ( ToJSON a
+                    , FromJSON b
+                    , MonadResource m
+                    , MonadReader ExchangeConf m
+                    , MonadError ExchangeFailure m )
+                 => Signed -> Path -> Maybe a -> m b
+realCoinbaseGet sgn p ma = realCoinbaseRequest "GET" sgn p ma >>= processResponse False
+
+realCoinbasePost :: ( ToJSON a
+                    , FromJSON b
+                    , MonadResource m
+                    , MonadReader ExchangeConf m
+                    , MonadError ExchangeFailure m )
+                 => Signed -> Path -> Maybe a -> m b
+realCoinbasePost sgn p ma = realCoinbaseRequest "POST" sgn p ma >>= processResponse False
+
 
 coinbaseRequest :: ( ToJSON a
                    , MonadResource m
@@ -78,7 +98,27 @@ coinbaseRequest meth sgn p ma = do
                                           ]
                        }
 
-        flip http (manager conf) =<< signMessage sgn meth p
+        flip http (manager conf) =<< signMessage True sgn meth p
+                                 =<< encodeBody ma req'
+
+realCoinbaseRequest :: ( ToJSON a
+                           , MonadResource m
+                           , MonadReader ExchangeConf m
+                           , MonadError ExchangeFailure m )
+                        => Method -> Signed -> Path -> Maybe a -> m (Response (ResumableSource m BS.ByteString))
+realCoinbaseRequest meth sgn p ma = do
+        conf <- ask
+        req  <- case apiType conf of
+                    Sandbox -> parseUrl $ sandboxRealCoinbaseRest ++ p
+                    Live    -> parseUrl $ liveRealCoinbaseRest ++ p
+        let req' = req { method         = meth
+                       , requestHeaders = [ ("user-agent", "haskell")
+                                          , ("accept", "application/json")
+                                          , ("content-type", "application/json")
+                                          ]
+                       }
+
+        flip http (manager conf) =<< signMessage False sgn meth p
                                  =<< encodeBody ma req'
 
 encodeBody :: (ToJSON a, Monad m)
@@ -91,29 +131,33 @@ encodeBody (Just a) req = return req
 encodeBody Nothing  req = return req
 
 signMessage :: (MonadIO m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-            => Signed -> Method -> Path -> Request -> m Request
-signMessage True meth p req = do
+            => IsForExchange -> Signed -> Method -> Path -> Request -> m Request
+signMessage isForExchange True meth p req = do
         conf <- ask
         case authToken conf of
             Just tok -> do time <- liftM (realToFrac . utcTimeToPOSIXSeconds) (liftIO getCurrentTime)
                                     >>= \t -> return . CBS.pack $ printf "%.0f" (t::Double)
                            rBody <- pullBody $ requestBody req
                            let presign = CBS.concat [time, meth, CBS.pack p, rBody]
-                               sign    = toBytes (hmac (secret tok) presign :: HMAC SHA256)
+                               sign    = if isForExchange
+                                            then Base64.encode         $ toBytes       (hmac (secret tok)                 presign :: HMAC SHA256)
+                                            else digestToHexByteString $ hmacGetDigest (hmac (Base64.encode $ secret tok) presign :: HMAC SHA256)
+
                            return req
                                 { requestBody    = RequestBodyBS rBody
                                 , requestHeaders = requestHeaders req ++
                                        [ ("cb-access-key", key tok)
-                                       , ("cb-access-sign", Base64.encode sign)
+                                       , ("cb-access-sign", sign )
                                        , ("cb-access-timestamp", time)
-                                       , ("cb-access-passphrase", passphrase tok)
-                                       ]
+                                       ] ++ if isForExchange
+                                                then [("cb-access-passphrase", passphrase tok)]
+                                                else [("cb-version", "2016-05-11")]
                                 }
             Nothing  -> throwError $ AuthenticationRequiredFailure $ T.pack p
     where pullBody (RequestBodyBS  b) = return b
           pullBody (RequestBodyLBS b) = return $ LBS.toStrict b
           pullBody _                  = throwError AuthenticationRequiresByteStrings
-signMessage False _ _ req = return req
+signMessage _ False _ _ req = return req
 
 --
 
@@ -121,15 +165,17 @@ processResponse :: ( FromJSON b
                    , MonadResource m
                    , MonadReader ExchangeConf m
                    , MonadError ExchangeFailure m )
-                => Response (ResumableSource m BS.ByteString) -> m b
-processResponse res =
+                => IsForExchange -> Response (ResumableSource m BS.ByteString) -> m b
+processResponse isForExchange res =
     case responseStatus res of
-        s | s == status200 -> do body <- responseBody res $$+- sinkParser (fmap {-(\x -> trace (show x) fromJSON x)-} fromJSON json)
-                                 case body of
-                                     Success b -> return b
-                                     Error  er -> throwError $ ParseFailure $ T.pack er
-          | otherwise      -> do body <- responseBody res $$+- CB.sinkLbs
-                                 throwError $ ApiFailure $ T.decodeUtf8 $ LBS.toStrict body
+        s | s == status200 || (s == created201 && not isForExchange) ->
+            do body <- responseBody res $$+- sinkParser (fmap (\x -> {-trace (show x)-} fromJSON x) json)
+               case body of
+                   Success b -> return b
+                   Error  er -> throwError $ ParseFailure $ T.pack er
+
+          | otherwise -> do body <- responseBody res $$+- CB.sinkLbs
+                            throwError $ ApiFailure $ T.decodeUtf8 $ LBS.toStrict body
 
 processEmpty :: ( MonadResource m
                 , MonadReader ExchangeConf m

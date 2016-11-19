@@ -252,6 +252,7 @@ creatNewLimitOrder = do
         , noClientOid = Just $ ClientOrderId $ fromJust $ fromString "c2cc10e1-57d6-4b6f-9899-111122223d8c"
         , noPostOnly  = False
         , noTimeInForce = GoodTillCanceled
+        , noCancelAfter = Nothing
         }
 
 

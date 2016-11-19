@@ -6,6 +6,7 @@ module Coinbase.Exchange.Rest
     ( coinbaseGet
     , coinbasePost
     , coinbaseDelete
+    , coinbaseDeleteDiscardBody
     , realCoinbaseGet
     , realCoinbasePost
     , voidBody
@@ -59,11 +60,19 @@ coinbasePost :: ( ToJSON a
 coinbasePost sgn p ma = coinbaseRequest "POST" sgn p ma >>= processResponse True
 
 coinbaseDelete :: ( ToJSON a
+                  , FromJSON b
                   , MonadResource m
                   , MonadReader ExchangeConf m
                   , MonadError ExchangeFailure m )
-               => Signed -> Path -> Maybe a -> m ()
-coinbaseDelete sgn p ma = coinbaseRequest "DELETE" sgn p ma >>= processEmpty
+               => Signed -> Path -> Maybe a -> m b
+coinbaseDelete sgn p ma = coinbaseRequest "DELETE" sgn p ma >>= processResponse True
+
+coinbaseDeleteDiscardBody :: ( ToJSON a
+                             , MonadResource m
+                             , MonadReader ExchangeConf m
+                             , MonadError ExchangeFailure m )
+                             => Signed -> Path -> Maybe a -> m ()
+coinbaseDeleteDiscardBody sgn p ma = coinbaseRequest "DELETE" sgn p ma >>= processEmpty
 
 realCoinbaseGet ::  ( ToJSON a
                     , FromJSON b

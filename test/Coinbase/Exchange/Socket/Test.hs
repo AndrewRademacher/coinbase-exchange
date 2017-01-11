@@ -90,7 +90,7 @@ decodeEncode conn = do
 receiveAndDecode :: WS.Connection -> IO ()
 receiveAndDecode conn = do
     ds <- WS.receiveData conn
-    let res = eitherDecode $ trace (show ds) ds
+    let res = eitherDecode {- $ trace (show ds) -} ds
     case res :: Either String ExchangeMessage of
         Left er -> print er   >> assertFailure "Parsing failure found"
         Right v -> return ()

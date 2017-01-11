@@ -24,6 +24,14 @@ data ExchangeMessage
     = Subscribe
         { msgProductId :: ProductId
         }
+    | HeartbeatReq
+        { msgHeartbeatOn :: Bool }
+    | Heartbeat
+        { msgTime        :: UTCTime
+        , msgProductId   :: ProductId
+        , msgSequence    :: Sequence
+        , msgLastTradeId :: TradeId
+        }
     | ReceivedLimit
         { msgTime      :: UTCTime
         , msgProductId :: ProductId
@@ -65,23 +73,20 @@ data ExchangeMessage
         , msgSize         :: Size
         , msgPrice        :: Price
         }
-    | DoneLimit
-        { msgTime      :: UTCTime
-        , msgProductId :: ProductId
-        , msgSequence  :: Sequence
-        , msgOrderId   :: OrderId
-        , msgSide      :: Side
-        , msgRemainingSize :: Size
-        , msgMaybePrice:: Maybe Price
-        , msgReason    :: Reason
-        }
-    | DoneMarket
+    | Done
         { msgTime      :: UTCTime
         , msgProductId :: ProductId
         , msgSequence  :: Sequence
         , msgOrderId   :: OrderId
         , msgSide      :: Side
         , msgReason    :: Reason
+        -- It is possible for these next two fields to be Nothing separately
+        -- Filled market orders limited by funds will not have a price but may have remaining_size
+        -- Filled limit orders may have a price but not a remaining_size (assumed zero)
+        -- CURRENTLY ** `remaining_size` reported in Done messages is sometimes incorrect **
+        -- This appears to be bug at GDAX. I've told them about it.
+        , msgMaybePrice   :: Maybe Price
+        , msgMaybeRemSize :: Maybe Size
         }
     | ChangeLimit
         { msgTime      :: UTCTime
@@ -113,7 +118,14 @@ instance NFData ExchangeMessage
 instance FromJSON ExchangeMessage where
     parseJSON (Object m) = do
         msgtype <- m .: "type"
+        -- TO DO: `HeartbeatReq` and `Subscribe` message types are missing as those are
+        -- never received by the client.
         case (msgtype :: String) of
+            "hearbeat"-> Heartbeat
+                <$> m .: "time"
+                <*> m .: "product_id"
+                <*> m .: "sequence"
+                <*> m .: "last_trade_id"
             "open" -> Open
                 <$> m .: "time"
                 <*> m .: "product_id"
@@ -122,25 +134,15 @@ instance FromJSON ExchangeMessage where
                 <*> m .: "side"
                 <*> m .: "remaining_size"
                 <*> m .: "price"
-            "done" -> do
-                typ  <- m .: "order_type"
-                case typ of
-                    Limit -> DoneLimit
-                        <$> m .: "time"
-                        <*> m .: "product_id"
-                        <*> m .: "sequence"
-                        <*> m .: "order_id"
-                        <*> m .: "side"
-                        <*> m .: "remaining_size"
-                        <*> m .:? "price"
-                        <*> m .: "reason"
-                    Market -> DoneMarket
-                        <$> m .: "time"
-                        <*> m .: "product_id"
-                        <*> m .: "sequence"
-                        <*> m .: "order_id"
-                        <*> m .: "side"
-                        <*> m .: "reason"
+            "done" -> Done
+                <$> m .: "time"
+                <*> m .: "product_id"
+                <*> m .: "sequence"
+                <*> m .: "order_id"
+                <*> m .: "side"
+                <*> m .: "reason"
+                <*> m .:? "price"
+                <*> m .:? "remaining_size"
             "match" -> Match
                 <$> m .: "time"
                 <*> m .: "product_id"
@@ -222,6 +224,10 @@ instance ToJSON ExchangeMessage where
         [ "type"       .= ("subscribe" :: Text)
         , "product_id" .= msgProductId
         ]
+    -- TO DO: `Heartbeat` message type is missing as those messages
+    -- are never sent by the client.
+    toJSON HeartbeatReq{..} = object
+        [ "on"         .= msgHeartbeatOn]
     toJSON Open{..} = object
         [ "type"       .= ("open" :: Text)
         , "time"       .= msgTime
@@ -232,33 +238,22 @@ instance ToJSON ExchangeMessage where
         , "remaining_size" .= msgRemainingSize
         , "price"      .= msgPrice
         ]
-    toJSON DoneLimit{..} = object
-        ([ "type"       .= ("done" :: Text)
+    toJSON Done{..} = object
+        ([ "type"      .= ("done" :: Text)
         , "time"       .= msgTime
         , "product_id" .= msgProductId
         , "sequence"   .= msgSequence
         , "order_id"   .= msgOrderId
         , "side"       .= msgSide
-        , "remaining_size" .= msgRemainingSize
-        -- , "price"      .= msgPrice
         , "reason"     .= msgReason
-        , "order_type" .= Limit
         ]
-        ++  case msgMaybePrice of
-                    Nothing -> []
-                    Just p  -> ["price" .= p ]
+        ++ case msgMaybePrice of
+                Nothing -> []
+                Just  p -> ["price" .= p]
+        ++ case msgMaybeRemSize of
+                Nothing -> []
+                Just  s -> ["remaining_size" .= s]
         )
-
-    toJSON DoneMarket{..} = object
-        [ "type"       .= ("done" :: Text)
-        , "time"       .= msgTime
-        , "product_id" .= msgProductId
-        , "sequence"   .= msgSequence
-        , "order_id"   .= msgOrderId
-        , "side"       .= msgSide
-        , "reason"     .= msgReason
-        , "order_type" .= Market
-        ]
     toJSON Match{..} = object
         [ "type"       .= ("match" :: Text)
         , "time"       .= msgTime

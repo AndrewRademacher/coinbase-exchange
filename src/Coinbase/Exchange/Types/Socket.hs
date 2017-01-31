@@ -204,6 +204,7 @@ instance FromJSON ExchangeMessage where
                                             (Nothing, Just f ) -> return $ Right (Nothing, f)
                                             (Just s , Just f ) -> return $ Right (Just s , f)
                                             )
+            "error" -> error (show m)
 
     parseJSON _ = mzero
 
@@ -227,7 +228,8 @@ instance ToJSON ExchangeMessage where
     -- TO DO: `Heartbeat` message type is missing as those messages
     -- are never sent by the client.
     toJSON HeartbeatReq{..} = object
-        [ "on"         .= msgHeartbeatOn]
+        [ "type"       .= ("heartbeat" :: Text)
+        , "on"         .= msgHeartbeatOn]
     toJSON Open{..} = object
         [ "type"       .= ("open" :: Text)
         , "time"       .= msgTime

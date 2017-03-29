@@ -175,7 +175,7 @@ instance FromJSON ExchangeMessage where
                                 <*> m .: "old_size"
             "received" -> do
                 typ  <- m .:  "order_type"
-                mcid <- m .:? "client_id"
+                mcid <- m .:? "client_oid"
                 case typ of
                     Limit -> ReceivedLimit
                                 <$> m .: "time"

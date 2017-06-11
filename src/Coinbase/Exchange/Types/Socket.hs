@@ -7,26 +7,38 @@
 
 module Coinbase.Exchange.Types.Socket where
 
+-------------------------------------------------------------------------------
 import           Control.DeepSeq
 import           Control.Monad
-import           Data.Aeson.Types      hiding (Error)
+import           Data.Aeson.Types             hiding (Error)
 import           Data.Data
 import           Data.Hashable
+import qualified Data.HashMap.Strict          as H
 import           Data.Text                    (Text)
 import           Data.Time
 import           Data.Word
 import           GHC.Generics
-import qualified Data.HashMap.Strict as H
+-------------------------------------------------------------------------------
+import           Coinbase.Exchange.Types.Core hiding (OrderStatus (..))
+-------------------------------------------------------------------------------
 
-import           Coinbase.Exchange.Types.Core  hiding (OrderStatus(..))
 
+
+-------------------------------------------------------------------------------
+-- | Messages we can send to the exchange
+data SendExchangeMessage
+    = Subscribe [ProductId]
+    | SetHeartbeat Bool
+    deriving (Eq, Show, Read, Data, Typeable, Generic)
+
+instance NFData SendExchangeMessage
+
+
+
+-------------------------------------------------------------------------------
+-- | Messages they send back to us
 data ExchangeMessage
-    = Subscribe
-        { msgProductId :: ProductId
-        }
-    | HeartbeatReq
-        { msgHeartbeatOn :: Bool }
-    | Heartbeat
+    = Heartbeat
         { msgTime        :: UTCTime
         , msgProductId   :: ProductId
         , msgSequence    :: Sequence
@@ -44,12 +56,12 @@ data ExchangeMessage
         , msgSize      :: Size
         }
     | ReceivedMarket
-        { msgTime      :: UTCTime
-        , msgProductId :: ProductId
-        , msgSequence  :: Sequence
-        , msgOrderId   :: OrderId
-        , msgSide      :: Side
-        , msgClientOid :: Maybe ClientOrderId
+        { msgTime         :: UTCTime
+        , msgProductId    :: ProductId
+        , msgSequence     :: Sequence
+        , msgOrderId      :: OrderId
+        , msgSide         :: Side
+        , msgClientOid    :: Maybe ClientOrderId
         -- market orders have no price and are bounded by either size, funds or both
         , msgMarketBounds :: (Either Size (Maybe Size, Cost))
         }
@@ -74,12 +86,12 @@ data ExchangeMessage
         , msgPrice        :: Price
         }
     | Done
-        { msgTime      :: UTCTime
-        , msgProductId :: ProductId
-        , msgSequence  :: Sequence
-        , msgOrderId   :: OrderId
-        , msgSide      :: Side
-        , msgReason    :: Reason
+        { msgTime         :: UTCTime
+        , msgProductId    :: ProductId
+        , msgSequence     :: Sequence
+        , msgOrderId      :: OrderId
+        , msgSide         :: Side
+        , msgReason       :: Reason
         -- It is possible for these next two fields to be Nothing separately
         -- Filled market orders limited by funds will not have a price but may have remaining_size
         -- Filled limit orders may have a price but not a remaining_size (assumed zero)
@@ -218,18 +230,21 @@ obj .:?? key = case H.lookup key obj of
                    then pure Nothing
                    else obj .:? key
 
----------------------------
 
-instance ToJSON ExchangeMessage where
-    toJSON Subscribe{..} = object
+-------------------------------------------------------------------------------
+instance ToJSON SendExchangeMessage where
+    toJSON (Subscribe pids) = object
         [ "type"       .= ("subscribe" :: Text)
-        , "product_id" .= msgProductId
+        , "product_ids" .= pids
         ]
-    -- TO DO: `Heartbeat` message type is missing as those messages
-    -- are never sent by the client.
-    toJSON HeartbeatReq{..} = object
+    toJSON (SetHeartbeat b) = object
         [ "type"       .= ("heartbeat" :: Text)
-        , "on"         .= msgHeartbeatOn]
+        , "on"         .= b]
+
+
+-------------------------------------------------------------------------------
+-- | Convenience/storage instance; never sent to exchange
+instance ToJSON ExchangeMessage where
     toJSON Open{..} = object
         [ "type"       .= ("open" :: Text)
         , "time"       .= msgTime

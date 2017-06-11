@@ -34,6 +34,7 @@ module Coinbase.Exchange.Types
     , ExchangeFailure (..)
 
     , Exchange
+    , ExchangeT
     , ExceptT
     , runExchange
     , runExchangeT

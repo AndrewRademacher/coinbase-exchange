@@ -35,7 +35,7 @@ import           Text.Printf
 
 import           Coinbase.Exchange.Types
 
-import Debug.Trace
+import           Debug.Trace
 
 type Signed = Bool
 type IsForExchange = Bool
@@ -99,8 +99,8 @@ coinbaseRequest :: ( ToJSON a
 coinbaseRequest meth sgn p ma = do
         conf <- ask
         req  <- case apiType conf of
-                    Sandbox -> parseUrl $ sandboxRest ++ p
-                    Live    -> parseUrl $ liveRest ++ p
+                    Sandbox -> parseUrlThrow $ sandboxRest ++ p
+                    Live    -> parseUrlThrow $ liveRest ++ p
         let req' = req { method         = meth
                        , requestHeaders = [ ("user-agent", "haskell")
                                           , ("accept", "application/json")
@@ -118,8 +118,8 @@ realCoinbaseRequest :: ( ToJSON a
 realCoinbaseRequest meth sgn p ma = do
         conf <- ask
         req  <- case apiType conf of
-                    Sandbox -> parseUrl $ sandboxRealCoinbaseRest ++ p
-                    Live    -> parseUrl $ liveRealCoinbaseRest ++ p
+                    Sandbox -> parseUrlThrow $ sandboxRealCoinbaseRest ++ p
+                    Live    -> parseUrlThrow $ liveRealCoinbaseRest ++ p
         let req' = req { method         = meth
                        , requestHeaders = [ ("user-agent", "haskell")
                                           , ("accept", "application/json")

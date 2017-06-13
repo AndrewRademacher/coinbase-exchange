@@ -74,7 +74,7 @@ tests conf = testGroup "Private"
         , testCase "getOrder"           (do no  <- creatNewLimitOrder
                                             oid <- run_placeOrder conf no
                                             o   <- run_getOrder conf oid
-                                            assertEqual "order price"    (noPrice no) (orderPrice o)
+                                            assertEqual "order price"    (round2dp $ noPrice no) (round2dp $orderPrice o)
                                             assertEqual "order size"     (noSize  no) (orderSize  o)
                                             assertEqual "order side"     (noSide  no) (orderSide  o)
                                             assertEqual "order product"  (noProductId no) (orderProductId o)
@@ -86,7 +86,7 @@ tests conf = testGroup "Private"
                                             os' <- run_getOrderList conf [Open, Pending]
                                             case os \\ os' of
                                                             [o] -> do
-                                                                    assertEqual "order price"    (noPrice no) (orderPrice o)
+                                                                    assertEqual "order price"    (round2dp $ noPrice no) (round2dp $ orderPrice o)
                                                                     assertEqual "order size"     (noSize  no) (orderSize  o)
                                                                     assertEqual "order side"     (noSide  no) (orderSide  o)
                                                                     assertEqual "order product"  (noProductId no) (orderProductId o)
@@ -107,7 +107,6 @@ tests conf = testGroup "Private"
         -- CAREFULL ON LIVE ENVIRONMENT!!! TRANSFERS ARE IRREVERSIBLE!!!
 
         -- This test cause a "403 Forbiden" error when run in the Sanbox. I'm not sure that can be fixed on my end.
-        -- FIX ME! This fails if we try to transfer small amounts (e.g. 0.01 as that is `show`n as "1.0e-2" and does not pass validation).
         , testCase "Withdraw BTCs" $
               assertFailure "Not Implemented"
 
@@ -133,7 +132,7 @@ creatNewLimitOrder = do
     -- CAREFUL CHANGING THESE VALUES IF YOU PERFORM TESTING IN THE LIVE ENVIRONMENT. YOU MAY LOOSE MONEY.
     return NewLimitOrder
         { noSize      = 0.01 + Size (CoinScientific $ fromInteger sz / 1000000 )
-        , noPrice     = 10
+        , noPrice     = 10.336
         , noProductId = "BTC-USD"
         , noSide      = Buy
         , noSelfTrade = DecrementAndCancel
@@ -182,10 +181,5 @@ run_cancelOrder conf oid = onSuccess conf (cancelOrder oid) "Failed to cancel or
 run_getFills :: ExchangeConf -> Maybe OrderId -> Maybe ProductId -> IO [Fill]
 run_getFills conf moid mpid = onSuccess conf (getFills moid mpid) "Failed to get fills"
 
------------
--- FIX ME! This fails if we try to transfer amounts smaller than 0.1 BTC
--- (e.g. 0.01 as that is `shown` as "1.0e-2" and does not pass validation).
--- The proper way to fix it is to change the ToJSON instance of CoinScientific,
--- but I'm not messing with that at this point as I believe volumes should not
--- be expressed in terms of CoinScientific, but in `Volume`. This problem will
--- also be fixed by that change.
+round2dp :: (Fractional a, RealFrac a) => a -> a
+round2dp x = fromInteger(round (100 * x )) / 100

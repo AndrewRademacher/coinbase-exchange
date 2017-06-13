@@ -29,14 +29,30 @@ import           Text.Read           (readMaybe)
 newtype ProductId = ProductId { unProductId :: Text }
     deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, IsString, NFData, Hashable, FromJSON, ToJSON)
 
+
 newtype Price = Price { unPrice :: CoinScientific }
-    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON)
+instance ToJSON Price where
+    toJSON (Price (CoinScientific v)) = String . T.pack . formatScientific Fixed (Just 2) $ v
+instance Show Price where
+    show (Price (CoinScientific v)) = formatScientific Generic Nothing v
+
 
 newtype Size = Size { unSize :: CoinScientific }
-    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON)
+instance ToJSON Size where
+    toJSON (Size (CoinScientific v)) = String . T.pack . formatScientific Fixed (Just 8) $ v
+instance Show Size where
+    show (Size (CoinScientific v)) = formatScientific Fixed (Just 8) v
+
 
 newtype Cost = Cost { unCost :: CoinScientific }
-    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON)
+instance ToJSON Cost where
+    toJSON (Cost (CoinScientific v)) = String . T.pack . formatScientific Fixed (Just 2) $ v
+instance Show Cost where
+    show (Cost (CoinScientific v)) = formatScientific Generic Nothing v
+
 
 newtype OrderId = OrderId { unOrderId :: UUID }
     deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
@@ -126,8 +142,9 @@ instance FromJSON Reason where
 newtype CoinScientific = CoinScientific { unCoinScientific :: Scientific }
     deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Show, Read, Data, Typeable, NFData, Hashable)
 
+-- Shows 8 decimal places (needs to be adapted for prices and costs in USD)
 instance ToJSON CoinScientific where
-    toJSON (CoinScientific v) = String . T.pack . show $ v
+    toJSON (CoinScientific v) = String . T.pack . formatScientific Fixed (Just 8) $ v
 instance FromJSON CoinScientific where
     parseJSON = withText "CoinScientific" $ \t ->
         case readMaybe (T.unpack t) of

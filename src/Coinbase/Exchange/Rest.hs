@@ -80,8 +80,8 @@ coinbaseRequest :: ( ToJSON a
 coinbaseRequest meth sgn p ma = do
         conf <- ask
         req  <- case apiType conf of
-                    Sandbox -> parseUrl $ sandboxRest ++ p
-                    Live    -> parseUrl $ liveRest ++ p
+                    Sandbox -> parseUrlThrow $ sandboxRest ++ p
+                    Live    -> parseUrlThrow $ liveRest ++ p
         let req' = req { method         = meth
                        , requestHeaders = [ ("user-agent", "haskell")
                                           , ("accept", "application/json")

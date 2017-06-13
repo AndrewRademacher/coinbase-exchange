@@ -308,7 +308,7 @@ instance ToJSON ExchangeMessage where
             where
                 clientID = case msgClientOid of
                     Nothing -> []
-                    Just ci -> ["client_id" .= msgClientOid ]
+                    Just ci -> ["client_oid" .= msgClientOid ]
 
     toJSON ReceivedMarket{..} = object (
         ["type"       .= ("received" :: Text)
@@ -322,7 +322,7 @@ instance ToJSON ExchangeMessage where
             where
                 clientID = case msgClientOid of
                     Nothing -> []
-                    Just ci -> ["client_id" .= msgClientOid ]
+                    Just ci -> ["client_oid" .= msgClientOid ]
                 (size,funds) = case msgMarketBounds of
                     Left  s -> (["size" .= s],[])
                     Right (ms,f) -> case ms of

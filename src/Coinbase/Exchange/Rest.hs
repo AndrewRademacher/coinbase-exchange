@@ -7,8 +7,6 @@ module Coinbase.Exchange.Rest
     , coinbasePost
     , coinbaseDelete
     , coinbaseDeleteDiscardBody
-    , realCoinbaseGet
-    , realCoinbasePost
     , voidBody
     ) where
 
@@ -74,23 +72,6 @@ coinbaseDeleteDiscardBody :: ( ToJSON a
                              => Signed -> Path -> Maybe a -> m ()
 coinbaseDeleteDiscardBody sgn p ma = coinbaseRequest "DELETE" sgn p ma >>= processEmpty
 
-realCoinbaseGet ::  ( ToJSON a
-                    , FromJSON b
-                    , MonadResource m
-                    , MonadReader ExchangeConf m
-                    , MonadError ExchangeFailure m )
-                 => Signed -> Path -> Maybe a -> m b
-realCoinbaseGet sgn p ma = realCoinbaseRequest "GET" sgn p ma >>= processResponse False
-
-realCoinbasePost :: ( ToJSON a
-                    , FromJSON b
-                    , MonadResource m
-                    , MonadReader ExchangeConf m
-                    , MonadError ExchangeFailure m )
-                 => Signed -> Path -> Maybe a -> m b
-realCoinbasePost sgn p ma = realCoinbaseRequest "POST" sgn p ma >>= processResponse False
-
-
 coinbaseRequest :: ( ToJSON a
                    , MonadResource m
                    , MonadReader ExchangeConf m
@@ -108,26 +89,6 @@ coinbaseRequest meth sgn p ma = do
                        }
 
         flip http (manager conf) =<< signMessage True sgn meth p
-                                 =<< encodeBody ma req'
-
-realCoinbaseRequest :: ( ToJSON a
-                           , MonadResource m
-                           , MonadReader ExchangeConf m
-                           , MonadError ExchangeFailure m )
-                        => Method -> Signed -> Path -> Maybe a -> m (Response (ResumableSource m BS.ByteString))
-realCoinbaseRequest meth sgn p ma = do
-        conf <- ask
-        req  <- case apiType conf of
-                    Sandbox -> parseUrl $ sandboxRealCoinbaseRest ++ p
-                    Live    -> parseUrl $ liveRealCoinbaseRest ++ p
-        let req' = req { method         = meth
-                       , requestHeaders = [ ("user-agent", "haskell")
-                                          , ("accept", "application/json")
-                                          , ("content-type", "application/json")
-                                          ]
-                       }
-
-        flip http (manager conf) =<< signMessage False sgn meth p
                                  =<< encodeBody ma req'
 
 encodeBody :: (ToJSON a, Monad m)

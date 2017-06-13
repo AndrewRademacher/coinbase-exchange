@@ -35,12 +35,6 @@ import qualified Data.ByteString.Char8             as CBS
 
 deriving instance Eq Order
 
--- NOTE: [Fills in Sandbox]
---
--- Orders don't seem to execute in the sandboxed environment provided by coinbase.
--- This means that we never get any fills. So, we can't test that API in the sandbox.
---
-
 
 tests :: ExchangeConf -> TestTree
 tests conf = testGroup "Private"
@@ -101,129 +95,23 @@ tests conf = testGroup "Private"
                                                             _  -> assertFailure "more than one order canceled"
                                         )
 
-        -- See NOTE: [Fills in Sandbox]
-        , testCase "getFills"           (case apiType conf of
-                                            Sandbox -> assertFailure "Running in Sanboxed environment. ** Cannot run getFills tests **"
-                                            Live -> do oid <- run_placeOrder conf giveAwayOrder
-                                                       fs <- run_getFills conf (Just oid) Nothing
-                                                       case fs of
-                                                           [] -> assertFailure "No fills found for an order that should execute immediately"
-                                                           _  -> return ()
-                                        )
+        , testCase "getFills" (do oid <- run_placeOrder conf giveAwayOrder
+                                  fs <- run_getFills conf (Just oid) Nothing
+                                  case fs of
+                                    [] -> assertFailure "No fills found for an order that should execute immediately"
+                                    _  -> return ()
+                              )
 
 
         -------------------------- BTC TRANSFER TESTS --------------------------
+        -- CAREFULL ON LIVE ENVIRONMENT!!! TRANSFERS ARE IRREVERSIBLE!!!
 
-        , testCase "get Coinbase (non-exchange) Accounts" $ do
-
-            mgr     <- newManager tlsManagerSettings
-            tKey    <- liftM CBS.pack $ getEnv "COINBASE_KEY_REAL"
-            tSecret <- liftM CBS.pack $ getEnv "COINBASE_SECRET_REAL"
-            let liveOrSandBox  = apiType conf
-                conf2 = case mkToken tKey tSecret "" of
-                    Right tok -> ExchangeConf mgr (Just tok) liveOrSandBox
-                    Left   er -> error $ show er
-
-            accounts <- run_getRealCoinbaseAccountList conf2
-            putStrLn $ "COINBASE ACCOUNTS: " ++ accounts
-
-        -----------------------------------------
         -- This test cause a "403 Forbiden" error when run in the Sanbox. I'm not sure that can be fixed on my end.
         -- FIX ME! This fails if we try to transfer small amounts (e.g. 0.01 as that is `show`n as "1.0e-2" and does not pass validation).
-        , testCase "Transfer BTCs to Coinbase" $
-            case apiType conf of
-                Sandbox -> assertFailure "Running in Sanboxes environment. ** This test always fails - Is it not implemented by Coinbase? **"
-                Live -> do
-                    btcAccount <- getEnv "COINBASE_BTC_ACCOUNT_REAL"
-                    let transfer = Withdraw
-                            { trAmount            = 0.1
-                            , trCoinbaseAccountId = CoinbaseAccountId $ fromJust $ fromString btcAccount}
-                    run_sendToCoinbase conf transfer
-                    return ()
-
-        -- -----------------------------------------
-        -- This test cause a "403 Forbiden" error when run in the Sanbox. I'm not sure that can be fixed on my end.
-        -- FIX ME! This fails if we try to transfer small amounts (e.g. 0.01 as that is `show`n as "1.0e-2" and does not pass validation).
-        , testCase "deposit BTCs from Coinbase" $
-            case apiType conf of
-                Sandbox -> assertFailure "Running in Sanboxes environment. ** This test always fails - Is it not implemented by Coinbase? **"
-                Live -> do
-                    btcAccount <- getEnv "COINBASE_BTC_ACCOUNT_REAL"
-                    let transfer = Deposit
-                            { trAmount            = 0.1  -- There must be this many BTCs there for this to work!
-                            , trCoinbaseAccountId = CoinbaseAccountId $ fromJust $ fromString btcAccount}
-                    run_sendToCoinbase conf transfer
-                    return ()
-
-        ---------------------------------------------
-        , testCase "get Coinbase (non-exchange) BTC account info" $ do
-
-            mgr     <- newManager tlsManagerSettings
-            tKey    <- liftM CBS.pack $ getEnv "COINBASE_KEY_REAL"
-            tSecret <- liftM CBS.pack $ getEnv "COINBASE_SECRET_REAL"
-            realCoinbaseAccount <- getEnv "COINBASE_BTC_ACCOUNT_REAL"
-            let liveOrSandBox  = apiType conf
-                conf2 = case mkToken tKey tSecret "" of
-                    Right tok -> ExchangeConf mgr (Just tok) liveOrSandBox
-                    Left   er -> error $ show er
-
-            info <- run_getPrimaryCoinbaseAccountInfo conf2
-            putStrLn $ "COINBASE ACCOUNT INFO: " ++ show info
-
-        -----------------------------------------
-        -- CAREFULL ON LIVE ENVIRONMENT!!! TRANSFERS ARE IRREVERSIBLE!!!
-        , testCase "send bitcoins from Coinbase Exchange (non-exchange) to remote wallet" $ do
-        -- CAREFULL ON LIVE ENVIRONMENT!!! TRANSFERS ARE IRREVERSIBLE!!!
-            mgr     <- newManager tlsManagerSettings
-            tKey    <- liftM CBS.pack $ getEnv "COINBASE_KEY_REAL"
-            tSecret <- liftM CBS.pack $ getEnv "COINBASE_SECRET_REAL"
-            btcAccount <- getEnv "COINBASE_BTC_ACCOUNT_REAL"
-
-            let liveOrSandBox  = apiType conf
-                conf2 = case mkToken tKey tSecret "" of
-                    Right tok -> ExchangeConf mgr (Just tok) liveOrSandBox
-                    Left   er -> error $ show er
-
-                remittance = SendBitcoin
-                    { sendAmount    = 0.10
-                    , bitcoinWallet = Wallet "1AwqxwJ4bVbCZDvVx5qBP5JDuaucfhxncq" -- mercado wallet
-                    }
-
-            transf <- run_sendBitcoins conf2 (CoinbaseAccountId $ fromJust $ fromString btcAccount) remittance
-            return ()
+        , testCase "Withdraw BTCs" $
+              assertFailure "Not Implemented"
 
         --------------------------------------------------------------------------------
-        -- This test puts the previous 2 together;
-        -- CAREFULL ON LIVE ENVIRONMENT!!! TRANSFERS ARE IRREVERSIBLE!!!
-        , testCase "Transfer BTCs to Mercado" $
-        -- CAREFULL ON LIVE ENVIRONMENT!!! TRANSFERS ARE IRREVERSIBLE!!!
-            case apiType conf of
-                Sandbox -> assertFailure "Running in Sanboxes environment. ** This test always fails - Is it not implemented by Coinbase? **"
-                Live    -> do
-                    mgr     <- newManager tlsManagerSettings
-                    tKey    <- liftM CBS.pack $ getEnv "COINBASE_KEY_REAL"
-                    tSecret <- liftM CBS.pack $ getEnv "COINBASE_SECRET_REAL"
-                    btcAccount <- getEnv "COINBASE_BTC_ACCOUNT_REAL"
-
-                    let conf2 = case mkToken tKey tSecret "" of
-                            Right tok -> ExchangeConf mgr (Just tok) Live
-                            Left   er -> error $ show er
-
-                        transfer = Withdraw
-                            { trAmount            = 0.1
-                            , trCoinbaseAccountId = CoinbaseAccountId $ fromJust $ fromString btcAccount}
-
-                        remittance = SendBitcoin
-                            { sendAmount    = 0.1
-                            , bitcoinWallet = undefined 
-                            }
-
-                    trsId <- run_sendToCoinbase conf transfer
-                    threadDelay (1*1000*1000) -- This 1 second value is arbitrary, but Coinbase apparenty requires a small delay.
-                    transf <- run_sendBitcoins conf2 (CoinbaseAccountId $ fromJust $ fromString btcAccount) remittance
-                    return ()
-        --------------------------------------------------------------------------------
-
         ]
 
 -----------------------------------------------
@@ -301,15 +189,3 @@ run_getFills conf moid mpid = onSuccess conf (getFills moid mpid) "Failed to get
 -- but I'm not messing with that at this point as I believe volumes should not
 -- be expressed in terms of CoinScientific, but in `Volume`. This problem will
 -- also be fixed by that change.
-
-run_sendToCoinbase :: ExchangeConf -> TransferToCoinbase -> IO TransferId
-run_sendToCoinbase conf transf = fmap trId $ onSuccess conf (createTransfer transf) "Failed to transfer to/from main coinbase account"
-
-run_sendBitcoins :: ExchangeConf -> CoinbaseAccountId -> BTCTransferReq -> IO BTCTransferResponse
-run_sendBitcoins conf acc req = onSuccess conf (sendBitcoins acc req) "Failed to send bitcoins to Wallet"
-
-run_getRealCoinbaseAccountList :: ExchangeConf -> IO String
-run_getRealCoinbaseAccountList conf = onSuccess conf getRealCoinbaseAccountList "Failed to get account list"
-
-run_getPrimaryCoinbaseAccountInfo :: ExchangeConf -> IO CoinbaseAccount
-run_getPrimaryCoinbaseAccountInfo conf = onSuccess conf getPrimaryCoinbaseAccountInfo "Failed to primary account info"

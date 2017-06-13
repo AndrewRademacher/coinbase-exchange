@@ -18,10 +18,6 @@ module Coinbase.Exchange.Private
 
     , createTransfer
 
-    , getRealCoinbaseAccountList
-    , getPrimaryCoinbaseAccountInfo
-    , sendBitcoins
-
     , createReport
     , getReportStatus
 
@@ -100,18 +96,6 @@ getFills moid mpid = coinbaseGet True ("/fills?" ++ oid ++ "&" ++ pid) voidBody
 createTransfer :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                => TransferToCoinbase -> m TransferToCoinbaseResponse
 createTransfer = coinbasePost True "/transfers" . Just
-
-getRealCoinbaseAccountList :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-               => m String
-getRealCoinbaseAccountList = realCoinbaseGet True "/v2/accounts" voidBody -- FIX ME! This is TO DO.
-
-getPrimaryCoinbaseAccountInfo :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-               => m CoinbaseAccount
-getPrimaryCoinbaseAccountInfo = realCoinbaseGet True "/v2/accounts/primary" voidBody
-
-sendBitcoins :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-               => CoinbaseAccountId -> BTCTransferReq -> m BTCTransferResponse
-sendBitcoins accountId = realCoinbasePost True ("/v2/accounts/" ++ show (unCoinbaseAccountId accountId) ++ "/transactions")  . Just
 
 -- Reports
 

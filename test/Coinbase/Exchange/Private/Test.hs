@@ -73,20 +73,24 @@ tests conf = testGroup "Private"
 
         , testCase "getOrder"           (do no  <- creatNewLimitOrder
                                             oid <- run_placeOrder conf no
+                                            threadDelay 1000000 -- 1 second delay
                                             o   <- run_getOrder conf oid
-                                            assertEqual "order price"    (round2dp $ noPrice no) (round2dp $orderPrice o)
+                                            assertEqual "order price"    (noPrice no) (orderPrice o)
                                             assertEqual "order size"     (noSize  no) (orderSize  o)
                                             assertEqual "order side"     (noSide  no) (orderSide  o)
                                             assertEqual "order product"  (noProductId no) (orderProductId o)
                                         )
         , testCase "cancelOrder"        (do no  <- creatNewLimitOrder
                                             oid <- run_placeOrder  conf no
+                                            threadDelay 1000000 -- 1 second delay
                                             os  <- run_getOrderList conf [Open, Pending]
+                                            threadDelay 1000000 -- 1 second delay
                                             run_cancelOrder conf oid
+                                            threadDelay 1000000 -- 1 second delay
                                             os' <- run_getOrderList conf [Open, Pending]
                                             case os \\ os' of
                                                             [o] -> do
-                                                                    assertEqual "order price"    (round2dp $ noPrice no) (round2dp $ orderPrice o)
+                                                                    assertEqual "order price"    (noPrice no) (orderPrice o)
                                                                     assertEqual "order size"     (noSize  no) (orderSize  o)
                                                                     assertEqual "order side"     (noSide  no) (orderSide  o)
                                                                     assertEqual "order product"  (noProductId no) (orderProductId o)
@@ -96,6 +100,7 @@ tests conf = testGroup "Private"
                                         )
 
         , testCase "getFills" (do oid <- run_placeOrder conf giveAwayOrder
+                                  threadDelay 1000000 -- 1 second delay
                                   fs <- run_getFills conf (Just oid) Nothing
                                   case fs of
                                     [] -> assertFailure "No fills found for an order that should execute immediately"

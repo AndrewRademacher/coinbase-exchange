@@ -166,8 +166,8 @@ instance FromJSON ExchangeMessage where
                 <*> m .: "size"
                 <*> m .: "price"
             "change" -> do
-                ms <- m .:? "new_size"
-                case (ms :: Maybe Size) of
+                ms <- m .:? "price"
+                case (ms :: Maybe Price) of
                     Nothing -> ChangeMarket
                                 <$> m .: "time"
                                 <*> m .: "product_id"

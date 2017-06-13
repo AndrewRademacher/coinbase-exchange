@@ -31,11 +31,18 @@ newtype ProductId = ProductId { unProductId :: Text }
 
 
 newtype Price = Price { unPrice :: CoinScientific }
-    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON)
+    deriving (Num, Fractional, Real, RealFrac, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON)
 instance ToJSON Price where
     toJSON (Price (CoinScientific v)) = String . T.pack . formatScientific Fixed (Just 2) $ v
 instance Show Price where
     show (Price (CoinScientific v)) = formatScientific Generic Nothing v
+instance Eq Price where
+    (Price (CoinScientific a)) == (Price (CoinScientific b)) = round2dp a == round2dp b
+instance Ord Price where
+    (Price (CoinScientific a)) `compare` (Price (CoinScientific b)) = round2dp a `compare` round2dp b
+
+round2dp :: (Fractional a, RealFrac a) => a -> a
+round2dp x = fromInteger(round (100 * x )) / 100
 
 
 newtype Size = Size { unSize :: CoinScientific }
@@ -47,11 +54,15 @@ instance Show Size where
 
 
 newtype Cost = Cost { unCost :: CoinScientific }
-    deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON)
+    deriving (Num, Fractional, Real, RealFrac, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON)
 instance ToJSON Cost where
     toJSON (Cost (CoinScientific v)) = String . T.pack . formatScientific Fixed (Just 2) $ v
 instance Show Cost where
     show (Cost (CoinScientific v)) = formatScientific Generic Nothing v
+instance Eq Cost where
+    (Cost (CoinScientific a)) == (Cost (CoinScientific b)) = round2dp a == round2dp b
+instance Ord Cost where
+    (Cost (CoinScientific a)) `compare` (Cost (CoinScientific b)) = round2dp a `compare` round2dp b
 
 
 newtype OrderId = OrderId { unOrderId :: UUID }

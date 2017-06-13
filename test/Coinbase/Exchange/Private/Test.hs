@@ -180,6 +180,3 @@ run_cancelOrder conf oid = onSuccess conf (cancelOrder oid) "Failed to cancel or
 
 run_getFills :: ExchangeConf -> Maybe OrderId -> Maybe ProductId -> IO [Fill]
 run_getFills conf moid mpid = onSuccess conf (getFills moid mpid) "Failed to get fills"
-
-round2dp :: (Fractional a, RealFrac a) => a -> a
-round2dp x = fromInteger(round (100 * x )) / 100

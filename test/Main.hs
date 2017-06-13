@@ -16,11 +16,11 @@ import qualified Coinbase.Exchange.Socket.Test     as Socket
 main :: IO ()
 main = do
         mgr     <- newManager tlsManagerSettings
-        tKey    <- liftM CBS.pack $ getEnv "COINBASE_KEY"
-        tSecret <- liftM CBS.pack $ getEnv "COINBASE_SECRET"
-        tPass   <- liftM CBS.pack $ getEnv "COINBASE_PASSPHRASE"
+        tKey    <- liftM CBS.pack $ getEnv "GDAX_KEY"
+        tSecret <- liftM CBS.pack $ getEnv "GDAX_SECRET"
+        tPass   <- liftM CBS.pack $ getEnv "GDAX_PASSPHRASE"
 
-        sbox    <- getEnv "COINBASE_SANDBOX"
+        sbox    <- getEnv "GDAX_SANDBOX"
         let apiType  = case sbox of
                         "FALSE" -> Live
                         "TRUE"  -> Sandbox

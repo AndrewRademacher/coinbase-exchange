@@ -8,6 +8,7 @@
 module Coinbase.Exchange.Types.Socket where
 
 -------------------------------------------------------------------------------
+import           Control.Applicative
 import           Control.DeepSeq
 import           Control.Monad
 import           Data.Aeson.Types             hiding (Error)
@@ -167,8 +168,7 @@ instance FromJSON ExchangeMessage where
                 <*> m .: "price"
             "change" -> do
                 ms <- m .:? "price"
-                case (ms :: Maybe Price) of
-                    Nothing -> ChangeMarket
+                let market = ChangeMarket
                                 <$> m .: "time"
                                 <*> m .: "product_id"
                                 <*> m .: "sequence"
@@ -176,7 +176,7 @@ instance FromJSON ExchangeMessage where
                                 <*> m .: "side"
                                 <*> m .: "new_funds"
                                 <*> m .: "old_funds"
-                    Just _ -> ChangeLimit
+                    limit = ChangeLimit
                                 <$> m .: "time"
                                 <*> m .: "product_id"
                                 <*> m .: "sequence"
@@ -185,6 +185,9 @@ instance FromJSON ExchangeMessage where
                                 <*> m .: "price"
                                 <*> m .: "new_size"
                                 <*> m .: "old_size"
+                case (ms :: Maybe Price) of
+                    Nothing -> market <|> limit
+                    Just _ -> limit <|> market
             "received" -> do
                 typ  <- m .:  "order_type"
                 mcid <- m .:? "client_oid"

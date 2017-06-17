@@ -81,6 +81,7 @@ tests conf = testGroup "Private"
                                             assertEqual "order product"  (noProductId no) (orderProductId o)
                                         )
         , testCase "cancelOrder"        (do no  <- creatNewLimitOrder
+                                            threadDelay 4000000 -- 4 second delay, to run after other tests
                                             oid <- run_placeOrder  conf no
                                             threadDelay 1000000 -- 1 second delay
                                             os  <- run_getOrderList conf [Open, Pending]

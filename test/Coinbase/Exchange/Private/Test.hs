@@ -137,7 +137,7 @@ creatNewLimitOrder = do
     -- CAREFUL CHANGING THESE VALUES IF YOU PERFORM TESTING IN THE LIVE ENVIRONMENT. YOU MAY LOOSE MONEY.
     return NewLimitOrder
         { noSize      = 0.01 + Size (CoinScientific $ fromInteger sz / 1000000 )
-        , noPrice     = 10.336
+        , noPrice     = 10.36
         , noProductId = "BTC-USD"
         , noSide      = Buy
         , noSelfTrade = DecrementAndCancel

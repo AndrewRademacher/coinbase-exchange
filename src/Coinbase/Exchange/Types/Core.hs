@@ -29,17 +29,12 @@ import           Text.Read           (readMaybe)
 newtype ProductId = ProductId { unProductId :: Text }
     deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, IsString, NFData, Hashable, FromJSON, ToJSON)
 
-
 newtype Price = Price { unPrice :: CoinScientific }
     deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON)
 instance ToJSON Price where
     toJSON (Price (CoinScientific v)) = String . T.pack . formatScientific Fixed Nothing $ v
 instance Show Price where
     show (Price (CoinScientific v)) = formatScientific Fixed Nothing v
-
-round2dp :: (Fractional a, RealFrac a) => a -> a
-round2dp x = fromInteger(round (100 * x )) / 100
-
 
 newtype Size = Size { unSize :: CoinScientific }
     deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON)
@@ -48,14 +43,12 @@ instance ToJSON Size where
 instance Show Size where
     show (Size (CoinScientific v)) = formatScientific Fixed Nothing v
 
-
 newtype Cost = Cost { unCost :: CoinScientific }
     deriving (Eq, Ord, Num, Fractional, Real, RealFrac, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON)
 instance ToJSON Cost where
     toJSON (Cost (CoinScientific v)) = String . T.pack . formatScientific Fixed Nothing $ v
 instance Show Cost where
     show (Cost (CoinScientific v)) = formatScientific Fixed Nothing v
-
 
 newtype OrderId = OrderId { unOrderId :: UUID }
     deriving (Eq, Ord, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)

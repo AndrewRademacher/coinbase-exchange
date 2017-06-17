@@ -113,12 +113,26 @@ tests conf = testGroup "Private"
 
         -- This test cause a "403 Forbiden" error when run in the Sanbox. I'm not sure that can be fixed on my end.
         , testCase "Withdraw BTCs" $
-              assertFailure "Not Implemented"
+            assertFailure "BTC withdrawal test Suspended for Safety"
+            -- (do
+            -- res <- run_withdrawBTC conf sampleTransfer
+            -- print res
+            -- return ()
+            -- )
 
         --------------------------------------------------------------------------------
         ]
 
 -----------------------------------------------
+-- DO NOT USE!! CAREFUL!! THIS WILL TRY TO SEND YOUR BITCOINS TO THE SPECIFIED WALLET BELOW!
+-- THIS MAY BE IRREVERSIBLE.
+sampleTransfer :: CryptoWithdrawal
+sampleTransfer = Withdrawal
+        { wdAmount        = 0.02
+        , wdCurrency      = CurrencyId "BTC"
+        , wdCryptoAddress = BTCWallet (FromBTCAddress "INVALID-WALLET-INVALID-WALLET-INVA")
+        }
+
 giveAwayOrder :: NewOrder
 giveAwayOrder = NewMarketOrder
     -- CAREFUL CHANGING THESE VALUES IF YOU PERFORM TESTING IN THE LIVE ENVIRONMENT. YOU MAY LOSE MONEY.
@@ -185,3 +199,6 @@ run_cancelOrder conf oid = onSuccess conf (cancelOrder oid) "Failed to cancel or
 
 run_getFills :: ExchangeConf -> Maybe OrderId -> Maybe ProductId -> IO [Fill]
 run_getFills conf moid mpid = onSuccess conf (getFills moid mpid) "Failed to get fills"
+
+run_withdrawBTC :: ExchangeConf -> CryptoWithdrawal -> IO CryptoWithdrawalResp
+run_withdrawBTC conf w = onSuccess conf (createCryptoWithdrawal w) "Failed to create withdrawal"

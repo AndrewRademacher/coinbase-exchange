@@ -17,6 +17,7 @@ module Coinbase.Exchange.Private
     , getFills
 
     , createTransfer
+    , createCryptoWithdrawal
 
     , createReport
     , getReportStatus
@@ -96,6 +97,12 @@ getFills moid mpid = coinbaseGet True ("/fills?" ++ oid ++ "&" ++ pid) voidBody
 createTransfer :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
                => TransferToCoinbase -> m TransferToCoinbaseResponse
 createTransfer = coinbasePost True "/transfers" . Just
+
+createCryptoWithdrawal
+    :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+    => CryptoWithdrawal
+    -> m CryptoWithdrawalResp
+createCryptoWithdrawal = coinbasePost True "/withdrawals/crypto" . Just
 
 -- Reports
 

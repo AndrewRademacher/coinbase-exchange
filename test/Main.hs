@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import           Control.Monad
@@ -8,6 +10,7 @@ import           System.Environment
 import           Test.Tasty
 
 import           Coinbase.Exchange.Types
+import           Coinbase.Exchange.Types.Core
 
 import qualified Coinbase.Exchange.MarketData.Test as MarketData
 import qualified Coinbase.Exchange.Private.Test    as Private
@@ -32,7 +35,7 @@ main = do
 
 tests :: ExchangeConf -> TestTree
 tests conf = testGroup "Tests"
-        [ MarketData.tests conf
-        , Private.tests    conf
-        , Socket.tests     conf
+        [ -- MarketData.tests conf
+        -- , Private.tests    conf
+        Socket.tests conf (ProductId "LTC-BTC") 
         ]

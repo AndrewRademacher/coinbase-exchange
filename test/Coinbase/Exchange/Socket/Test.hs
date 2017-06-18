@@ -40,11 +40,6 @@ tests conf market= testGroup "Socket"
         -- See NOTE: [Connectivity Precondition]
         [ testCase "Do I receive messages?"  (receiveSocket  conf market)
         , testCase "Parse Websocket Stream"  (parseSocket    conf market (threadDelay $ 1000000 * 20))
-        , testCase "Parse with Market Order" (parseSocket conf market (do
-                                                                    threadDelay $ 1000000 * 15
-                                                                    oid'<- P.run_placeOrder conf P.giveAwayOrder -- place market order
-                                                                    threadDelay $ 1000000 * 15
-                                                               ))
         , testCase "Decode Re-Encode Decode" (reencodeSocket conf market)
         ]
 

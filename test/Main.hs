@@ -35,7 +35,7 @@ main = do
 
 tests :: ExchangeConf -> TestTree
 tests conf = testGroup "Tests"
-        [ -- MarketData.tests conf
-        -- , Private.tests    conf
-        Socket.tests conf (ProductId "LTC-BTC") 
+        [ MarketData.tests conf
+        , Private.tests    conf
+        , Socket.tests conf (ProductId "ETH-BTC") 
         ]

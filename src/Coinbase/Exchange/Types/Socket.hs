@@ -102,14 +102,17 @@ data ExchangeMessage
         , msgMaybeRemSize :: Maybe Size
         }
     | ChangeLimit
-        { msgTime      :: UTCTime
-        , msgProductId :: ProductId
-        , msgSequence  :: Sequence
-        , msgOrderId   :: OrderId
-        , msgSide      :: Side
-        , msgPrice     :: Price
-        , msgNewSize   :: Size
-        , msgOldSize   :: Size
+        { msgTime       :: UTCTime
+        , msgProductId  :: ProductId
+        , msgSequence   :: Sequence
+        , msgOrderId    :: OrderId
+        , msgSide       :: Side
+        -- Observation has revealed Price is not always present in
+        -- change messages with old_size and new_size. This may be
+        -- self trade prevention or something of the sort.
+        , msgMaybePrice :: Maybe Price
+        , msgNewSize    :: Size
+        , msgOldSize    :: Size
         }
     | ChangeMarket
         { msgTime      :: UTCTime
@@ -290,7 +293,7 @@ instance ToJSON ExchangeMessage where
         [ "type" .= ("error" :: Text)
         , "message" .= msgMessage
         ]
-    toJSON ChangeLimit{..} = object
+    toJSON ChangeLimit{..} = object $
         [ "type"       .= ("change" :: Text)
         , "time"       .= msgTime
         , "product_id" .= msgProductId
@@ -299,8 +302,7 @@ instance ToJSON ExchangeMessage where
         , "side"       .= msgSide
         , "new_size"   .= msgNewSize
         , "old_size"   .= msgOldSize
-        , "price"      .= msgPrice
-        ]
+        ] ++ maybe [] (return . ("price" .= )) msgMaybePrice
     toJSON ChangeMarket{..} = object
         [ "type"       .= ("change" :: Text)
         , "time"       .= msgTime

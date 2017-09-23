@@ -17,10 +17,7 @@ module Coinbase.Exchange.Private
     , getFills
 
     , createTransfer
-
-    , getRealCoinbaseAccountList
-    , getPrimaryCoinbaseAccountInfo
-    , sendBitcoins
+    , createCryptoWithdrawal
 
     , createReport
     , getReportStatus
@@ -101,17 +98,11 @@ createTransfer :: (MonadResource m, MonadReader ExchangeConf m, MonadError Excha
                => TransferToCoinbase -> m TransferToCoinbaseResponse
 createTransfer = coinbasePost True "/transfers" . Just
 
-getRealCoinbaseAccountList :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-               => m String
-getRealCoinbaseAccountList = realCoinbaseGet True "/v2/accounts" voidBody -- FIX ME! This is TO DO.
-
-getPrimaryCoinbaseAccountInfo :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-               => m CoinbaseAccount
-getPrimaryCoinbaseAccountInfo = realCoinbaseGet True "/v2/accounts/primary" voidBody
-
-sendBitcoins :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
-               => CoinbaseAccountId -> BTCTransferReq -> m BTCTransferResponse
-sendBitcoins accountId = realCoinbasePost True ("/v2/accounts/" ++ show (unCoinbaseAccountId accountId) ++ "/transactions")  . Just
+createCryptoWithdrawal
+    :: (MonadResource m, MonadReader ExchangeConf m, MonadError ExchangeFailure m)
+    => CryptoWithdrawal
+    -> m CryptoWithdrawalResp
+createCryptoWithdrawal = coinbasePost True "/withdrawals/crypto" . Just
 
 -- Reports
 

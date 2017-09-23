@@ -35,39 +35,30 @@ import Debug.Trace
 -- from the socket, before running the parsing tests.
 -------------------------------------
 
-
-tests :: ExchangeConf -> TestTree
-tests conf = testGroup "Socket"
+tests :: ExchangeConf -> ProductId -> TestTree
+tests conf market= testGroup "Socket"
         -- See NOTE: [Connectivity Precondition]
-        [ testCase "Do I receive messages?"  (receiveSocket conf)
-        , testCase "Parse Websocket Stream"  (parseSocket conf (threadDelay $ 1000000 * 20))
-        , testCase "Parse with Market Order" (parseSocket conf (do
-                                                                    threadDelay $ 1000000 * 15
-                                                                    oid'<- P.run_placeOrder conf P.giveAwayOrder -- place market order
-                                                                    threadDelay $ 1000000 * 15
-                                                               ))
-        , testCase "Decode Re-Encode Decode" (reencodeSocket conf)
+        [ testCase "Do I receive messages?"  (receiveSocket  conf market)
+        , testCase "Parse Websocket Stream"  (parseSocket    conf market (threadDelay $ 1000000 * 20))
+        , testCase "Decode Re-Encode Decode" (reencodeSocket conf market)
         ]
 
-
-
-receiveSocket :: ExchangeConf -> IO ()
-receiveSocket conf = subscribe (apiType conf) (ProductId "BTC-USD") $ \conn -> do
+receiveSocket :: ExchangeConf -> ProductId -> IO ()
+receiveSocket conf market = subscribe (apiType conf) market $ \conn -> do
     sequence_ $ replicate 20 (receiveAndDecode conn)
 
 -- Success: no parse errors   found while running
 -- Failure: a parse error is  found while running
-parseSocket :: ExchangeConf -> IO a -> IO ()
-parseSocket conf challenge = subscribe (apiType conf) (ProductId "BTC-USD") $ \conn -> do
+parseSocket :: ExchangeConf -> ProductId -> IO a -> IO ()
+parseSocket conf market challenge = subscribe (apiType conf) market $ \conn -> do
     waitCancelThreads challenge (forever $ receiveAndDecode conn)
     return ()
 
-
 -- FIX ME! there's no guarantee we are hitting all order types.
 -- a more thorough test would be better.
-reencodeSocket :: ExchangeConf -> IO ()
-reencodeSocket conf = subscribe (apiType conf) (ProductId "BTC-USD") $ \conn -> do
-    sequence_ $ replicate 1000 (decodeEncode conn) -- currently takes under a minute on 'Live' feed
+reencodeSocket :: ExchangeConf -> ProductId -> IO ()
+reencodeSocket conf market = subscribe (apiType conf) market $ \conn -> do
+    sequence_ $ replicate 1000 (decodeEncode conn)
 
 decodeEncode :: WS.Connection -> IO ()
 decodeEncode conn = do

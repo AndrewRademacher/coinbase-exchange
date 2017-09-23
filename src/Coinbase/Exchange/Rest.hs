@@ -33,7 +33,7 @@ import           Text.Printf
 
 import           Coinbase.Exchange.Types
 
-import Debug.Trace
+import           Debug.Trace
 
 type Signed = Bool
 type IsForExchange = Bool
@@ -89,6 +89,26 @@ coinbaseRequest meth sgn p ma = do
                        }
 
         flip http (manager conf) =<< signMessage True sgn meth p
+                                 =<< encodeBody ma req'
+
+realCoinbaseRequest :: ( ToJSON a
+                           , MonadResource m
+                           , MonadReader ExchangeConf m
+                           , MonadError ExchangeFailure m )
+                        => Method -> Signed -> Path -> Maybe a -> m (Response (ResumableSource m BS.ByteString))
+realCoinbaseRequest meth sgn p ma = do
+        conf <- ask
+        req  <- case apiType conf of
+                    Sandbox -> parseUrlThrow $ sandboxRealCoinbaseRest ++ p
+                    Live    -> parseUrlThrow $ liveRealCoinbaseRest ++ p
+        let req' = req { method         = meth
+                       , requestHeaders = [ ("user-agent", "haskell")
+                                          , ("accept", "application/json")
+                                          , ("content-type", "application/json")
+                                          ]
+                       }
+
+        flip http (manager conf) =<< signMessage False sgn meth p
                                  =<< encodeBody ma req'
 
 encodeBody :: (ToJSON a, Monad m)

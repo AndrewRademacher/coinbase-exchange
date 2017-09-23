@@ -56,7 +56,7 @@ withCoinbase act = do
             Left   er -> error $ show er
 
 printSocket :: IO ()
-printSocket = subscribe Live btc $ \conn -> do
+printSocket = subscribe Live [btc] $ \conn -> do
         putStrLn "Connected."
         _ <- forkIO $ forever $ do
             ds <- WS.receiveData conn

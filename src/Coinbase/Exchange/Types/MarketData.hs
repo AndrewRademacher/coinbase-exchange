@@ -52,8 +52,8 @@ instance FromJSON Product where
 data Book a
     = Book
         { bookSequence :: Sequence
-        , bookBids     :: [Bid a]
-        , bookAsks     :: [Ask a]
+        , bookBids     :: [BookItem a]
+        , bookAsks     :: [BookItem a]
         }
     deriving (Show, Data, Typeable, Generic)
 
@@ -63,22 +63,13 @@ instance (ToJSON a) => ToJSON (Book a) where
 instance (FromJSON a) => FromJSON (Book a) where
     parseJSON = genericParseJSON coinbaseAesonOptions
 
-data Ask a = Ask Price Size a
+data BookItem a = BookItem Price Size a
     deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
 
-instance (NFData a) => NFData (Ask a)
-instance (ToJSON a) => ToJSON (Ask a) where
+instance (NFData a) => NFData (BookItem a)
+instance (ToJSON a) => ToJSON (BookItem a) where
     toJSON = genericToJSON defaultOptions
-instance (FromJSON a) => FromJSON (Ask a) where
-    parseJSON = genericParseJSON defaultOptions
-
-data Bid a = Bid Price Size a
-    deriving (Eq, Ord, Show, Read, Data, Typeable, Generic)
-
-instance (NFData a) => NFData (Bid a)
-instance (ToJSON a) => ToJSON (Bid a) where
-    toJSON = genericToJSON defaultOptions
-instance (FromJSON a) => FromJSON (Bid a) where
+instance (FromJSON a) => FromJSON (BookItem a) where
     parseJSON = genericParseJSON defaultOptions
 
 -- Product Ticker

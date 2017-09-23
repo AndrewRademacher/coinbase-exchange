@@ -2,24 +2,24 @@
 
 module Coinbase.Exchange.Socket.Test (tests) where
 
-import           Data.Aeson
-import           Control.Monad
 import           Control.Concurrent
 import           Control.Concurrent.Async
+import           Control.Monad
+import           Data.Aeson
 
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
-import qualified Network.WebSockets              as WS
+import qualified Network.WebSockets             as WS
 
-import           Coinbase.Exchange.Types
-import           Coinbase.Exchange.Types.Core
 import           Coinbase.Exchange.Private
 import           Coinbase.Exchange.Socket
+import           Coinbase.Exchange.Types
+import           Coinbase.Exchange.Types.Core
 
-import qualified Coinbase.Exchange.Private.Test  as P
+import qualified Coinbase.Exchange.Private.Test as P
 
-import Debug.Trace
+import           Debug.Trace
 
 -------------------------------------
 -- NOTE: [Connectivity Precondition]
@@ -38,25 +38,25 @@ import Debug.Trace
 tests :: ExchangeConf -> ProductId -> TestTree
 tests conf market= testGroup "Socket"
         -- See NOTE: [Connectivity Precondition]
-        [ testCase "Do I receive messages?"  (receiveSocket  conf market)
-        , testCase "Parse Websocket Stream"  (parseSocket    conf market (threadDelay $ 1000000 * 20))
-        , testCase "Decode Re-Encode Decode" (reencodeSocket conf market)
+        [ testCase "Do I receive messages?"  (receiveSocket  conf [market])
+        , testCase "Parse Websocket Stream"  (parseSocket    conf [market] (threadDelay $ 1000000 * 20))
+        , testCase "Decode Re-Encode Decode" (reencodeSocket conf [market])
         ]
 
-receiveSocket :: ExchangeConf -> ProductId -> IO ()
+receiveSocket :: ExchangeConf -> [ProductId] -> IO ()
 receiveSocket conf market = subscribe (apiType conf) market $ \conn -> do
     sequence_ $ replicate 20 (receiveAndDecode conn)
 
 -- Success: no parse errors   found while running
 -- Failure: a parse error is  found while running
-parseSocket :: ExchangeConf -> ProductId -> IO a -> IO ()
+parseSocket :: ExchangeConf -> [ProductId] -> IO a -> IO ()
 parseSocket conf market challenge = subscribe (apiType conf) market $ \conn -> do
     waitCancelThreads challenge (forever $ receiveAndDecode conn)
     return ()
 
 -- FIX ME! there's no guarantee we are hitting all order types.
 -- a more thorough test would be better.
-reencodeSocket :: ExchangeConf -> ProductId -> IO ()
+reencodeSocket :: ExchangeConf -> [ProductId] -> IO ()
 reencodeSocket conf market = subscribe (apiType conf) market $ \conn -> do
     sequence_ $ replicate 1000 (decodeEncode conn)
 

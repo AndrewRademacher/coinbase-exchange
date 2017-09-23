@@ -57,7 +57,7 @@ newtype Aggregate = Aggregate { unAggregate :: Int64 }
     deriving (Eq, Ord, Show, Read, Num, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 newtype Sequence = Sequence { unSequence :: Word64 }
-    deriving (Eq, Ord, Num, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
+    deriving (Eq, Ord, Num, Enum, Show, Read, Data, Typeable, Generic, NFData, Hashable, FromJSON, ToJSON)
 
 --
 
@@ -92,7 +92,7 @@ instance ToJSON TradeId where
 instance FromJSON TradeId where
     parseJSON (String t) = pure $ TradeId $ read $ T.unpack t
     parseJSON (Number n) = pure $ TradeId $ floor n
-    parseJSON _ = mzero
+    parseJSON _          = mzero
 
 --
 

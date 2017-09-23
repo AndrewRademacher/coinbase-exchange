@@ -17,6 +17,8 @@ module Coinbase.Exchange.Types
     , sandboxSocket
     , liveRest
     , liveSocket
+    , liveRealCoinbaseRest
+    , sandboxRealCoinbaseRest
 
     , Key
     , Secret
